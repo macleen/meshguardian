@@ -113,7 +113,7 @@ Looking to integrate MeshGuardian with drones, remote sensors, or satellite comm
 
 📧 Email: `acutclub@gmail.com`  
 🐙 GitHub: [@macleen](https://github.com/macleen)  
-🌐 Site (soon): `meshguardian.network`
+🌐 Site: `meshguardian.com`
 
 ---
 
