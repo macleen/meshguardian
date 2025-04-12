@@ -93,7 +93,7 @@ We welcome contributors across languages, platforms, and domains.
 ### 📂 Repo Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/meshguardian.git
+git clone https://github.com/macleen/meshguardian.git
 cd meshguardian
 ```
 
