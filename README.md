@@ -1,6 +1,8 @@
 
 # 🛡️ MeshGuardian
 
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+
 **Resilient, secure, and modular mesh networking protocol for Delay-Tolerant Networks (DTNs), disaster zones, and interplanetary systems.**
 
 [Full documentation available at https://meshguardian.com](https://meshguardian.com)
@@ -93,7 +95,7 @@ We welcome contributors across languages, platforms, and domains.
 ### 📂 Repo Setup
 
 ```bash
-git clone https://github.com/macleen/meshguardian.git
+git clone https://github.com/YOUR_USERNAME/meshguardian.git
 cd meshguardian
 ```
 
@@ -113,7 +115,7 @@ Looking to integrate MeshGuardian with drones, remote sensors, or satellite comm
 
 📧 Email: `acutclub@gmail.com`  
 🐙 GitHub: [@macleen](https://github.com/macleen)  
-🌐 Site: `meshguardian.com`
+🌐 Site (soon): `meshguardian.network`
 
 ---
 
@@ -122,4 +124,9 @@ Looking to integrate MeshGuardian with drones, remote sensors, or satellite comm
 
 
 ---
-📚 For complete technical documentation, visit [https://meshguardian.com](https://meshguardian.com/docs)
+📚 For complete technical documentation, visit [https://meshguardian.com](https://meshguardian.com)
+
+
+---
+
+© 2025 Chokri Mahmoud. Released under the [Apache 2.0 License](LICENSE).
