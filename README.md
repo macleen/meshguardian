@@ -95,7 +95,7 @@ We welcome contributors across languages, platforms, and domains.
 ### 📂 Repo Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/meshguardian.git
+git clone https://github.com/macleen/meshguardian.git
 cd meshguardian
 ```
 
@@ -115,7 +115,7 @@ Looking to integrate MeshGuardian with drones, remote sensors, or satellite comm
 
 📧 Email: `acutclub@gmail.com`  
 🐙 GitHub: [@macleen](https://github.com/macleen)  
-🌐 Site (soon): `meshguardian.network`
+🌐 Site: `meshguardian.com`
 
 ---
 
@@ -124,7 +124,7 @@ Looking to integrate MeshGuardian with drones, remote sensors, or satellite comm
 
 
 ---
-📚 For complete technical documentation, visit [https://meshguardian.com](https://meshguardian.com)
+📚 For complete technical documentation, visit [https://meshguardian.com](https://meshguardian.com/docs)
 
 
 ---
