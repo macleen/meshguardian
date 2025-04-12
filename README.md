@@ -105,7 +105,7 @@ Pick your language from `/bindings/` and go!
 
 ## 📄 License
 
-MeshGuardian is released under the [MIT License](LICENSE), with optional Apache 2.0 and CLA layers for patent protection and audit compliance.
+MeshGuardian is released under the [Apache 2.0 License](LICENSE). All core protocols, packet structures, and architectural features are protected under international intellectual property law and are currently **patent pending** (EPO filing in progress).
 
 ---
 
@@ -130,3 +130,12 @@ Looking to integrate MeshGuardian with drones, remote sensors, or satellite comm
 ---
 
 © 2025 Chokri Mahmoud. Released under the [Apache 2.0 License](LICENSE).
+---
+
+## 🔐 Legal Notice & Intellectual Property
+
+MeshGuardian™ is a registered project under the intellectual ownership of Chokri Mahmoud.  
+The MeshGuardian protocol, including but not limited to its packet structure, consensus engine, synchronization mechanisms, and audit trail architecture, is **patent pending** (EPO filing in progress).
+
+Reproduction or significant derivation of core features without appropriate citation, licensing, or compliance with contributor terms may result in legal accountability.
+
