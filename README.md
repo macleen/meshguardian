@@ -5,7 +5,7 @@
 
 **Resilient, secure, and modular mesh networking protocol for Delay-Tolerant Networks (DTNs), disaster zones, and interplanetary systems.**
 
-[Full documentation available at https://meshguardian.com](https://meshguardian.com)
+[Full documentation available at https://meshguardian.com](https://meshguardian.com/docs)
 
 MeshGuardian is a next-generation protocol stack designed to keep communication alive—even when everything else fails. Built for the harshest environments, from offline villages and war zones to deep space networks, it brings trust, synchronization, and performance to where traditional internet protocols fall apart.
 
@@ -135,6 +135,6 @@ Looking to integrate MeshGuardian with drones, remote sensors, or satellite comm
 ## 🔐 Legal Notice & Intellectual Property
 
 MeshGuardian™ is a registered project under the intellectual ownership of Chokri Mahmoud.  
-The MeshGuardian protocol, including but not limited to its packet structure, consensus engine, synchronization mechanisms, and audit trail architecture, is **patent pending** (EPO filing in progress).
+The MeshGuardian protocol, including but not limited to its packet structure, consensus engine, synchronization mechanisms, and audit trail architecture, is **patent pending** (USPTO filing in progress).
 
 Reproduction or significant derivation of core features without appropriate citation, licensing, or compliance with contributor terms may result in legal accountability.
