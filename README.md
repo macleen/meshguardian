@@ -122,4 +122,4 @@ Looking to integrate MeshGuardian with drones, remote sensors, or satellite comm
 
 
 ---
-📚 For complete technical documentation, visit [https://meshguardian.com](https://meshguardian.com)
+📚 For complete technical documentation, visit [https://meshguardian.com](https://meshguardian.com/docs)
