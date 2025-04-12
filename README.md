@@ -11,6 +11,8 @@ MeshGuardian is a next-generation protocol stack designed to keep communication 
 
 ---
 
+![MeshGuardian vs. Others](docs/mesh_comparison.webp)
+
 ## 🌐 Key Features
 
 - 🔁 **Delay-Tolerant Synchronization**  
