@@ -21,7 +21,7 @@ We’re thrilled that you’re considering contributing to **MeshGuardian**, a r
 ### 1. Fork the Repo
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/meshguardian.git
+git clone https://github.com/macleen/meshguardian.git
 cd meshguardian
 ```
 
@@ -96,4 +96,4 @@ We’re building something for the world’s most disconnected regions. If you w
 
 
 ---
-📚 Need help? See the full protocol guide at [https://meshguardian.com](https://meshguardian.com)
+📚 Need help? See the full protocol guide at [https://meshguardian.com](https://meshguardian.com/docs)
