@@ -95,7 +95,7 @@ We welcome contributors across languages, platforms, and domains.
 ### 📂 Repo Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/meshguardian.git
+git clone https://github.com/macleen/meshguardian.git
 cd meshguardian
 ```
 
@@ -115,21 +115,21 @@ Looking to integrate MeshGuardian with drones, remote sensors, or satellite comm
 
 📧 Email: `acutclub@gmail.com`  
 🐙 GitHub: [@macleen](https://github.com/macleen)  
-🌐 Site (soon): `meshguardian.network`
+🌐 Site: `meshguardian.com`
 
 ---
 
 > “When the grid fails, trust survives.”  
 > — The MeshGuardian Philosophy
 
-
 ---
-📚 For complete technical documentation, visit [https://meshguardian.com](https://meshguardian.com)
 
+📚 For complete technical documentation, visit [https://meshguardian.com](https://meshguardian.com/docs)
 
 ---
 
 © 2025 Chokri Mahmoud. Released under the [Apache 2.0 License](LICENSE).
+
 ---
 
 ## 🔐 Legal Notice & Intellectual Property
@@ -138,4 +138,3 @@ MeshGuardian™ is a registered project under the intellectual ownership of Chok
 The MeshGuardian protocol, including but not limited to its packet structure, consensus engine, synchronization mechanisms, and audit trail architecture, is **patent pending** (EPO filing in progress).
 
 Reproduction or significant derivation of core features without appropriate citation, licensing, or compliance with contributor terms may result in legal accountability.
-
