@@ -17,7 +17,7 @@ MeshGuardian™ and its logo, naming convention, and full-stack design are prote
 
 ## 🧠 Patent Status
 
-The MeshGuardian protocol is **Patent Pending** with the **European Patent Office (EPO)**.
+The MeshGuardian protocol is **Patent Pending** with the **US Patent Office (USPTO)**.
 
 Covered components include (but are not limited to):
 
