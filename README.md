@@ -107,7 +107,7 @@ Pick your language from `/bindings/` and go!
 
 ## 📄 License
 
-MeshGuardian is released under the [Apache 2.0 License](LICENSE). All core protocols, packet structures, and architectural features are protected under international intellectual property law and are currently **patent pending** (EPO filing in progress).
+MeshGuardian is released under the [Apache 2.0 License](LICENSE). All core protocols, packet structures, and architectural features are protected under international intellectual property law and are currently **patent pending** (USPTO filing in progress).
 
 ---
 
