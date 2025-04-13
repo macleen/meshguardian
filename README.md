@@ -99,17 +99,17 @@ MeshGuardian stands out among DTN and mesh networking protocols due to its uniqu
 
 MeshGuardian supports SDKs in many popular languages—each with its own entry point in the `/bindings` directory:
 
-/bindings/
-├── c/
-├── csharp/
-├── python/
-├── java/
-├── go/
-├── javascript/
-├── php/
-├── rust/
-
-
+/bindings/  
+├── c/  
+├── csharp/  
+├── python/  
+├── java/  
+├── go/  
+├── javascript/  
+├── php/  
+├── rust/  
+  
+  
 Each SDK is modular, independently testable, and installable via its native package manager.
 NB: The MeshGuardian codebase is currently empty but in the process of being constructed, and with your support as a contributor, it won’t take long to bring it to life.
 
