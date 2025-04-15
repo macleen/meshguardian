@@ -1,0 +1,3 @@
+CLASS Packet
+    METHOD __init__(source, dest, data, profile="default")
+        self.id = ...

@@ -1,0 +1,27 @@
+// MeshGuardian Module Flowchart
+digraph {
+	A [label="🧠 Core Networking" fillcolor=lightblue shape=box style=filled]
+	B [label="📡 Protocol Engine" fillcolor=white shape=box style=filled]
+	C [label="🗳️ Consensus Mechanism" fillcolor=white shape=box style=filled]
+	D [label="🔐 Security" fillcolor=white shape=box style=filled]
+	E [label="📜 Audit & Logging" fillcolor=white shape=box style=filled]
+	F [label="🗜️ Compression" fillcolor=white shape=box style=filled]
+	G [label="🔌 Device Management" fillcolor=white shape=box style=filled]
+	H [label="🔍 Monitoring & Maintenance" fillcolor=white shape=box style=filled]
+	I [label="🌐 External Integration" fillcolor=white shape=box style=filled]
+	A -> B
+	A -> C
+	A -> D
+	A -> E
+	A -> F
+	A -> G
+	A -> H
+	A -> I
+	B -> G
+	B -> D
+	C -> D
+	C -> E
+	D -> E
+	H -> E
+	I -> E
+}
