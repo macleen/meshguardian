@@ -7,14 +7,14 @@ In MeshGuardian, a **packet** is a data unit sent between nodes (e.g., IoT senso
 Defines the `PacketCreator` class for initializing packet attributes, the `Packet.create` method for orchestrating creation, and the `PacketHeaders` class for header metadata. Ensures robust packet formation, supporting MeshGuardian’s crisis and IoT goals.
 
 ## Conventions
-- `CLASS Name`: Defines a class, like PHP’s `class` or JS’s `class`.  
-- `METHOD name(args)`: Defines a method, like Laravel’s method or JS function.  
-- `NEW Class`: Creates an instance, like PHP’s `new` or JS’s `new`.  
-- `CALL function`: Invokes a method, like PHP’s `$this->method()` or JS’s `obj.method()`.  
-- `IF condition`: Conditional logic, like PHP’s `if` or JS’s `if`.  
-- `RAISE Error`: Throws an exception, like PHP’s `throw` or JS’s `throw`.  
-- `// Comment`: Explains logic, like PHP/JS comments.  
-- `Dictionary`: Key-value structure, like PHP’s array (`['key' => 'value']`) or JS object (`{ key: 'value' }`).
+- `CLASS Name`: Defines a class.  
+- `METHOD name(args)`: Defines a method.  
+- `NEW Class`: Creates an instance.  
+- `CALL function`: Invokes a method.  
+- `IF condition`: Conditional logic.  
+- `RAISE Error`: Throws an exception.  
+- `// Comment`: Explains logic.  
+- `Dictionary`: Key-value structure.
 
 ## Interfaces
 - `PacketCreator.create(source, dest, data, profile)`
@@ -63,13 +63,7 @@ CLASS PacketHeaders
             headers = NEW PacketHeaders("emergency")
             // headers.ttl is 1800, headers.priority is "urgent"
         OOP Notes:
-            - Like a Laravel FormRequest defining validated inputs.
-            - Similar to JavaScript’s { ttl: 3600, profile: "default" } object.
             - For C++ devs: Like struct Headers { int ttl; string profile; }.
-        Python Learning:
-            - `self` is like `$this` in Laravel or `this` in JS, for attributes.
-            - Like Laravel’s $request->validated(), headers store settings.
-            - Try imagining: headers = {"ttl": 3600}; print(headers["ttl"]).
         """
         // Validate profile
         valid_profiles = CALL get_valid_profiles()  // From /pseudo-code/protocol/profiles.md
@@ -112,13 +106,7 @@ CLASS PacketCreator
             IF CALL creator.create("", "Node_B", b"data", "invalid")
                 // Raises MissingSourceError
         OOP Notes:
-            - Like a Laravel factory returning ['id' => Str::uuid()].
-            - Similar to JavaScript’s createPacket() returning { id, source, ... }.
             - For embedded devs: Like C++ PacketBuilder::build().
-        Python Learning:
-            - `dict` is like Laravel’s array, e.g., ['key' => 'value'].
-            - `RAISE` is like PHP’s throw, for try/except.
-            - `IF NOT x` is like Laravel’s empty($x).
         """
         // Validate inputs
         IF NOT source
@@ -193,12 +181,10 @@ CLASS Packet
             packet = NEW Packet("Node_A", "Node_B", b"hello", "emergency")
             // packet.source is "Node_A", packet.headers.priority is "urgent"
         OOP Notes:
-            - Like a Laravel model, e.g., $user->name = "Alice".
-            - Similar to JavaScript’s new Packet(source, dest).
             - For C++ devs: Like Packet::Packet(string source).
         Python Learning:
-            - `__init__` is like Laravel’s __construct().
-            - `self` is like `$this`, e.g., self.id accesses ID.
+            - `__init__` is the constructor.
+            - `self`, e.g., self.id accesses ID.
         """
         // Initialize mini-classes
         self.creator = NEW PacketCreator()
@@ -228,8 +214,6 @@ CLASS Packet
             data = CALL packet.create()
             // data["headers"].priority is "normal"
         OOP Notes:
-            - Like Laravel’s toArray().
-            - Similar to JavaScript’s toJSON().
             - For embedded devs: Like a C++ getter.
         """
         RETURN {
@@ -251,10 +235,8 @@ CLASS Packet
   - Logging: /pseudo-code/audit/audit_trail.md.  
   - Errors: /pseudo-code/exceptions/networking_errors.md, /pseudo-code/exceptions/base_exception.md.  
 - **Python Learning**:  
-  - `Dictionary` is like Laravel’s array or JS object.  
-  - `CALL` is like PHP’s `$this->method()`.  
-  - `RAISE` is like Laravel’s `throw`.  
-- **Future Python**: This folder may become a Python package with `__init__.py`, like Laravel’s `app/` namespace, grouping modules.
+  - `Dictionary` is the data container.  
+- **Future Python**: This folder may become a Python package with `__init__.py`, grouping modules.
 
 ## Contributor Guide
 This file is a pseudocode blueprint for packet creation. Contribute by refining it to guide future implementations. See /pseudo-code/CONTRIBUTING.md for PR guidelines.
@@ -262,5 +244,5 @@ This file is a pseudocode blueprint for packet creation. Contribute by refining 
 1. **Understand MeshGuardian**: Read Background, Use Cases (5.11–5.16).  
 2. **Refine Pseudocode**: Enhance `PacketCreator.create` (e.g., add validation)? Extend `PacketHeaders` (e.g., new fields)?  
 3. **Validate Design**: Ensure SRP, check edge cases (4.1.3).  
-4. **Document**: Update front-matter, add comments like Laravel’s.  
+4. **Document**: Update front-matter, add comments.  
 5. **Submit**: Fork, commit (e.g., “Add validation”), PR to `/pseudo-code/`.
