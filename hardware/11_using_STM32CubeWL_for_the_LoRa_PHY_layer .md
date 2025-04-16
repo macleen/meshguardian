@@ -78,12 +78,14 @@ Example: OTAA Join Request
     LoRaMacMlmeRequest(&joinParams);
 ```
 
-**Advantages Over Custom PHY** 
+## Advantages Over Custom PHY
 
-Feature	STM32CubeWL	Custom PHY Implementation  
-Development Time	✅ Fast (ST-certified)	❌ Slow, higher risk
-RF Performance	✅ Optimized	❌ Manual tuning needed
-Certification Readiness	✅ Pre-tested (ETSI)	❌ Requires full re-test
+| Feature                | STM32CubeWL               | Custom PHY Implementation            |
+|------------------------|---------------------------|---------------------------------------|
+| Development Time       | ✅ Fast (ST-certified)     | ❌ Slow, higher risk                  |
+| RF Performance         | ✅ Optimized               | ❌ Manual tuning needed              |
+| Certification Readiness| ✅ Pre-tested (ETSI)       | ❌ Requires full re-test             |
+
 
 **Critical Implementation Checks**
 Clock Configuration  
@@ -99,12 +101,14 @@ Enter low-power mode with:
 Common RXTX control pin: PC13  
 Validate configuration in subghz_conf.h  
 
-Troubleshooting Tips
+## Troubleshooting Tips
 
-**Symptom Fix Suggestion**
-❌ No LoRa Output	Check SUBGHZ_SPI init, verify HAL_SUBGHZ_Transmit()
-⚠️ Poor Range	Use Radio_Calibrate() and match antenna to 50Ω
-❌ GPS No Lock	Check antenna wiring, ensure 3.3V rail is stable
+| Symptom         | Fix Suggestion                                                                 |
+|------------------|--------------------------------------------------------------------------------|
+| ❌ No LoRa Output | Check `SUBGHZ_SPI` initialization, verify `HAL_SUBGHZ_Transmit()` is called   |
+| ⚠️ Poor Range     | Use `Radio_Calibrate()` and match antenna to 50Ω                              |
+| ❌ GPS No Lock    | Check antenna wiring, ensure 3.3V rail is stable                              |
+
 
 **Next Steps**
 Import into Project
