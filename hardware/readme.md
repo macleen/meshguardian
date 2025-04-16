@@ -31,6 +31,21 @@ Guidelines for real-world deployment in various environments, including consider
 ### 7. [`7_additional_considerations.md`](./7_additional_considerations.md)
 Advanced tips and optional features such as GPS integration, heat dissipation, solar power, and rugged enclosures.
 
+### 8. [`8_feasability_review.md`](./8_feasability_review.md)
+Technical feasibility review of hardware design choices including MCU, GPS module, power circuitry, and PCB layout considerations.
+
+### 9. [`9_RF_validation_procedure.md`](./9_RF_validation_procedure.md)
+Complete RF validation steps for LoRa and GPS modules including test setups, performance metrics, and compliance checks.
+
+### 10. [`10_firmware_integration.md`](./10_firmware_integration.md)
+Guide for integrating firmware with STM32WL, LoRaWAN stack options, GPS data acquisition, and software structure.
+
+### 11. [`11_using_STM32CubeWL_for_the_LoRa_PHY_layer .md`](./11_using_STM32CubeWL_for_the_LoRa_PHY_layer%20.md)
+Details for leveraging STMicroelectronics’ CubeWL platform for optimized LoRa PHY-layer configuration on STM32WL.
+
+### 12. [`12_PCB_reverse_polarity_protection.md`](./12_PCB_reverse_polarity_protectionusing.md)
+Methods to implement reverse polarity protection (diode, MOSFET), schematics, BOM updates, and PCB layout tips.
+
 ---
 
 ## ⚙️ Getting Started
@@ -40,4 +55,3 @@ To begin, open [`1_hardware_requirements.md`](./1_hardware_requirements.md) and 
 ---
 
 > 💡 Tip: You don’t need to be a hardware expert. Each step is written with clarity in mind, making it accessible to makers, developers, and field engineers alike.
-
