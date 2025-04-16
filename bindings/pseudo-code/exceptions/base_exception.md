@@ -31,44 +31,41 @@ Defines the `BaseException` class as the parent for all MeshGuardian errors, ens
 - Use Case 5.16: Emergency chat (reliable error logging, 5.16)
 
 ## Pseudocode
-
-```python
+```pseudocode
 CLASS BaseException
-    """
-    Base class for all MeshGuardian errors, providing common attributes.
-    Used In: 5.11, 5.12, 5.14, 5.15, 5.16
-    Purpose: Ensures consistent error handling across modules.
-    """
+    // Base class for all MeshGuardian errors, providing common attributes.
+    // Used In: 5.11, 5.12, 5.14, 5.15, 5.16
+    // Purpose: Ensures consistent error handling across modules.
+
     // Attributes
     message: String    // Error description, e.g., "Source ID cannot be empty"
     timestamp: Integer // Creation time, e.g., Unix epoch
-    
+
     METHOD __init__(message)
-        """
-        Initializes the error with a message and timestamp.
-        Args:
-            message: String explaining the error
-        Example:
-            error = NEW BaseException("Generic error")
-            // error.message is "Generic error", error.timestamp is e.g., 1739467200
-        OOP Notes:
-            - For C++ devs: Like std::exception with custom fields.
-        """
+        // Initializes the error with a message and timestamp.
+        // Args:
+        //     message: String explaining the error
+        // Example:
+        //     error = NEW BaseException("Generic error")
+        //     error.message is "Generic error", error.timestamp is e.g., 1739467200
+        // OOP Notes:
+        //     - For C++ devs: Like std::exception with custom fields.
         self.message = message
         self.timestamp = CALL get_current_timestamp()  // e.g., Unix epoch
+```
+
+---
 
 ## Notes
-- **Single Responsibility**: Provides shared error attributes (message, timestamp).  
-- **Extensibility**: Errors extend BaseException, e.g., /pseudo-code/exceptions/networking_errors.md, future /pseudo-code/exceptions/protocol_errors.md.  
-- **Reusability**: Used by all modules.  
-- **Edge Cases**: Ensures timestamp for logging (5.11, 5.16).  
-- **Dependencies**: None, foundational for errors.  
+- Single Responsibility: Provides shared error attributes (message, timestamp).
+- Extensibility: Errors extend BaseException, e.g., /pseudo-code/exceptions/networking_errors.md, future /pseudo-code/exceptions/protocol_errors.md.
+- Reusability: Used by all modules.
+- Edge Cases: Ensures timestamp for logging (5.11, 5.16).
+- Dependencies: None, foundational for errors.
 
 ## Contributor Guide
-Contribute by refining BaseException to enhance error handling. See /pseudo-code/CONTRIBUTING.md for PR guidelines.
-
-1. **Understand Errors**: Read Background, Used In (5.11–5.16).  
-2. **Refine Pseudocode**: Add attributes (e.g., `code`)? New methods?  
-3. **Validate Design**: Ensure simplicity, cover logging needs (5.11).  
-4. **Document**: Update front-matter, add comments.  
-5. **Submit**: Fork, commit (e.g., “Add code attribute”), PR to `/pseudo-code/`.
+- Understand Errors: Read Background, Used In (5.11–5.16).
+- Refine Pseudocode: Add attributes (e.g., code)? New methods?
+- Validate Design: Ensure simplicity, cover logging needs (5.11).
+- Document: Update front-matter, add comments.
+- Submit: Fork, commit (e.g., “Add code attribute”), PR to /pseudo-code/.

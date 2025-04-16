@@ -223,6 +223,8 @@ CLASS Packet
             "data": self.data,
             "headers": self.headers
         }
+```
+---
 
 ## Notes
 - **Single Responsibility**: `PacketCreator` handles creation, `PacketHeaders` manages headers (4.1.4, 4.1.1).  

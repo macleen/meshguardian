@@ -32,9 +32,7 @@ This module is referenced in the following use cases:
 - **Use Case 5.16**: Emergency chat – Manages packet flow to ensure real-time communication during high-traffic disaster scenarios.
 
 ## Pseudocode
-Below is the detailed logic for the packet buffering module, implemented as a First-In-First-Out (FIFO) queue:
-
-```pseudo-code
+```pseudocode
 CLASS PacketBuffer
     METHOD initialize(max_size)
         /*
@@ -105,3 +103,12 @@ CLASS PacketBuffer
         Empties the buffer by removing all packets.
         */
         CLEAR buffer
+```
+
+---
+
+## Notes
+- Edge Cases: Handle buffer overflow by raising BufferOverflowError and return null for dequeue() on an empty buffer.
+- Performance: Aim for O(1) time complexity for enqueue and dequeue operations; monitor memory usage under high load.
+- Thread Safety: Consider adding locks or semaphores for concurrent access by multiple threads.
+- Future Enhancements: Explore priority-based queuing for critical packets and timeout mechanisms to discard stale packets.

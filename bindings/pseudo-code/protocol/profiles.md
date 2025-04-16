@@ -1,20 +1,61 @@
+# Profiles Module
+
 ## Purpose
-Describe what this module does and why it exists.
+The Profiles module is responsible for defining and managing communication profiles that dictate how packets are handled within the system. It allows the configuration of settings such as priority, time-to-live (TTL), and other parameters to optimize packet processing for specific scenarios, such as urgent disaster messaging or routine data transfers. This module exists to provide flexibility and control, ensuring the system can adapt to diverse operational needs efficiently.
 
 ## Interfaces
-List of key functions, classes, or systems this module exposes or interacts with.
+- `get_profile_settings(profile_name)`: Retrieves the settings (e.g., TTL, priority) for a given profile.
+- `add_profile(profile_name, settings)`: Adds a new profile with specified settings.
+- `update_profile(profile_name, new_settings)`: Modifies the settings of an existing profile.
+- `remove_profile(profile_name)`: Removes a specified profile from the system.
 
 ## Depends On
-Dependencies on other modules.
+- `/pseudo-code/shared/constants.md`: Supplies constants like `DEFAULT_TTL` and `DEFAULT_PRIORITY` for default settings.
+- `/pseudo-code/audit/audit_trail.md`: Logs profile modifications for auditing purposes.
 
 ## Called By
-Other modules or layers that use this module.
+- `/pseudo-code/networking/packet_creation.md`: Fetches profile settings to configure packets.
+- `/pseudo-code/networking/packet_headers.md`: Applies profile settings to packet headers.
 
 ## Used In
-Referenced use cases (e.g., 5.15, 5.16).
+- **5.15**: Multi-hop supply tracking in crisis zones, where profiles prioritize urgent packets.
+- **5.16**: Real-time disaster messaging, where profiles ensure low-latency delivery.
 
 ## Pseudocode
-Provide detailed logic in pseudocode format.
+\`\`\`pseudocode
+FUNCTION get_profile_settings(profile_name)
+    IF profile_name NOT IN profiles
+        RAISE ProfileNotFoundError("Profile '" + profile_name + "' does not exist")
+    ELSE
+        RETURN profiles[profile_name]
+
+FUNCTION add_profile(profile_name, settings)
+    IF profile_name IN profiles
+        RAISE ProfileAlreadyExistsError("Profile '" + profile_name + "' already exists")
+    ELSE
+        SET profiles[profile_name] TO settings
+        CALL log_event("Profile added: " + profile_name)
+
+FUNCTION update_profile(profile_name, new_settings)
+    IF profile_name NOT IN profiles
+        RAISE ProfileNotFoundError("Profile '" + profile_name + "' does not exist")
+    ELSE
+        SET profiles[profile_name] TO new_settings
+        CALL log_event("Profile updated: " + profile_name)
+
+FUNCTION remove_profile(profile_name)
+    IF profile_name NOT IN profiles
+        RAISE ProfileNotFoundError("Profile '" + profile_name + "' does not exist")
+    ELSE
+        REMOVE profiles[profile_name]
+        CALL log_event("Profile removed: " + profile_name)
+\`\`\`
+
+---
 
 ## Notes
-Additional implementation notes, edge cases, or TODOs.
+- Profiles are stored as key-value pairs with the profile name as the key and settings (e.g., `{"ttl": 3600, "priority": "normal"}`) as the value.
+- Error handling ensures robustness by checking for missing or duplicate profiles.
+- Consider optimizing for scalability as the number of profiles grows.
+- Profile settings should be validated to prevent invalid configurations.
+- **TODO**: Implement TTL range checks and other validation rules.

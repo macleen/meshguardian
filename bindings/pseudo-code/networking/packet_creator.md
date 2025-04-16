@@ -37,3 +37,14 @@ CLASS PacketCreator
             "timestamp": timestamp
         }
         RETURN packet
+
+```  
+
+---
+
+## Notes
+- GENERATE_UNIQUE_ID(): This function should generate a unique identifier (e.g., UUID) to ensure each packet has a distinct ID.
+- GET_CURRENT_TIMESTAMP(): This function should return the current time, typically in a standard format like Unix epoch time.
+- STRUCTURE: Represents a data structure (e.g., dictionary, object, struct) that holds the packet's attributes.
+- Error Handling: Consider adding validation for required fields like source and dest to ensure they are not empty or invalid.
+- Extensibility: The packet structure can be extended with additional fields as needed, such as headers or checksums.

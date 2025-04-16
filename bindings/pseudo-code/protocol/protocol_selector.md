@@ -1,20 +1,51 @@
+# Protocol Selector Module
+
 ## Purpose
-Describe what this module does and why it exists.
+The Protocol Selector module is responsible for dynamically selecting the most appropriate communication protocol based on the current network conditions, packet characteristics, and predefined profiles. This ensures optimal performance, reliability, and efficiency in various scenarios, such as emergency messaging or routine data transfers.
 
 ## Interfaces
-List of key functions, classes, or systems this module exposes or interacts with.
+- `select_protocol(packet, context)`: Determines the most suitable protocol for a given packet and context.
+- `get_available_protocols()`: Returns a list of protocols currently available in the system.
+- `set_protocol_preference(preference_list)`: Allows setting a preference order for protocols.
 
 ## Depends On
-Dependencies on other modules.
+- `/pseudo-code/protocol/profiles.md`: Provides profile settings that influence protocol selection.
+- `/pseudo-code/networking/network_conditions.md`: Supplies real-time network condition data.
+- `/pseudo-code/shared/constants.md`: Offers constants used in protocol selection logic.
 
 ## Called By
-Other modules or layers that use this module.
+- `/pseudo-code/networking/packet_sending.md`: Uses this module to select the protocol before sending a packet.
+- `/pseudo-code/networking/packet_receiving.md`: Determines the protocol for incoming packets.
+- `/pseudo-code/application_layer/communication_manager.md`: Manages higher-level communication strategies.
 
 ## Used In
-Referenced use cases (e.g., 5.15, 5.16).
+- **Use Case 5.15**: Multi-hop supply tracking in crisis zones, where different protocols are needed based on network reliability.
+- **Use Case 5.16**: Real-time disaster messaging, where low-latency protocols are preferred.
 
 ## Pseudocode
-Provide detailed logic in pseudocode format.
+```pseudocode
+FUNCTION select_protocol(packet, context)
+    profile = packet.get_profile()
+    network_conditions = context.get_network_conditions()
+    available_protocols = get_available_protocols()
+
+    IF profile.has_preferred_protocol()
+        preferred = profile.get_preferred_protocol()
+        IF preferred IN available_protocols
+            RETURN preferred
+
+    IF network_conditions.is_high_latency()
+        RETURN "reliable_protocol"
+    ELSE IF network_conditions.is_low_bandwidth()
+        RETURN "efficient_protocol"
+    ELSE
+        RETURN "default_protocol"
+```
+
+---
 
 ## Notes
-Additional implementation notes, edge cases, or TODOs.
+- Protocol selection can be based on various factors including network conditions, packet priority, and profile settings.
+- The current implementation uses a simple if-else logic; consider using a more sophisticated algorithm for better optimization.
+- Ensure that the selected protocol is always available and compatible with the current system state.
+- **TODO**: Add support for protocol fallback in case the selected protocol fails.
