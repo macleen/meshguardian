@@ -34,10 +34,11 @@ FUNCTION check_rate_limit(source)
         RESET_ATTEMPTS(source)
         RETURN False  // Limit not exceeded
     END IF
-    IF attempts >= max_attempts * WARNING_THRESHOLD THEN
+    IF attempts >= max_attempts * 0.8 THEN
         LOG_POTENTIAL_ATTACK(source)
     END IF
     IF attempts >= max_attempts THEN
+        WAF.BLOCK_TEMPORARY(source)  // Coordinate with WAF
         RETURN True  // Limit exceeded
     ELSE
         RETURN False  // Limit not exceeded
@@ -50,7 +51,14 @@ FUNCTION record_attempt(source, success)
         SET_ATTEMPTS(source, 1)
     ELSE
         IF NOT success THEN
-            SET_ATTEMPTS(source, attempts + 1)
+            IF is_new_device(source) THEN
+                SET_ATTEMPTS(source, attempts + 2)  // Penalize new devices
+            ELSE
+                SET_ATTEMPTS(source, attempts + 1)
+            END IF
+            IF is_high_risk_region(source.geoip) THEN
+                SET_MAX_ATTEMPTS(max_attempts * 0.5)  // Geo-adaptive limits
+            END IF
         ELSE
             RESET_ATTEMPTS(source)  // Reward successful auth
         END IF
@@ -64,7 +72,7 @@ FUNCTION reset_attempts(source)
     SET_LAST_ATTEMPT_TIME(source, NULL)
     ENCRYPT_AND_STORE(source, {0, NULL})
 
-// Function: configure_rate_limit(max_attempts, time_window)
+// Function: configure_rate_limit
 FUNCTION configure_rate_limit(max_attempts, time_window)
     IF is_new_device(source) THEN
         SET_MAX_ATTEMPTS(LOWER_LIMIT)
@@ -75,9 +83,15 @@ FUNCTION configure_rate_limit(max_attempts, time_window)
     IF max_attempts IS NULL THEN
         SET_MAX_ATTEMPTS(5)  // Fail-secure default
     END IF
+    IF RISK_ASSESSMENT.get_risk_score(source) > 0.7 THEN
+        SET_MAX_ATTEMPTS(max_attempts * 0.3)  // Anomaly detection
+    END IF
 
 // Helper functions
 FUNCTION GET_ATTEMPT_DATA(source)
+    IF RISK_ASSESSMENT.is_compromised(source) THEN
+        CACHE_EVICT(source)  // Secure cache
+    END IF
     IF CACHE_HAS(source) THEN
         RETURN CACHE_GET(source)
     ELSE
@@ -97,8 +111,19 @@ FUNCTION ENCRYPT_AND_STORE(source, data)
     STORE_IN_RATE_LIMIT_STORAGE(source, encrypted_data)
 
 FUNCTION is_new_device(source)
-    // Check if source is a new device based on historical data or risk signals
-    RETURN IS_NEW_DEVICE(source)
+    RETURN IS_NEW_DEVICE(source)  // Based on historical data or risk signals
+
+FUNCTION is_high_risk_region(geoip)
+    RETURN GEOIP_RISK_CHECK(geoip)  // Geo-based risk assessment
+
+// State cleanup
+SCHEDULE_DAILY_CLEANUP(
+    DELETE_FROM_STORAGE_WHERE last_attempt_time < NOW() - 90d
+)
+
+// Key rotation
+ON KEY_ROTATION_EVENT:
+    REENCRYPT_ALL_STORED_DATA(new_key)
 ```
 
 ---

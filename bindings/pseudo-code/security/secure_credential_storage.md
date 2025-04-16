@@ -28,41 +28,60 @@ The Secure Credential Storage module handles the secure storage of sensitive cre
 ## Pseudocode
 The following pseudo-code outlines the core logic for securely storing, retrieving, and deleting credentials.
 ```pseudocode
-// Function: store_credential
+/* Function: store_credential */
 FUNCTION store_credential(credential_id, credential)
-    // Encrypt the credential using a secure encryption algorithm
-    encrypted_credential = ENCRYPT(credential)
-    // Store the encrypted credential in the secure vault
-    STORE_IN_VAULT(credential_id, encrypted_credential)
-    // Log the storage event
-    LOG("Credential stored securely with ID: " + credential_id)
+    IF NOT VALIDATE_CREDENTIAL(credential)
+        RAISE InvalidCredentialError("Invalid credential format")
+    END IF
+    TRY
+        encrypted_credential = ENCRYPT(credential)
+        STORE_IN_VAULT(credential_id, encrypted_credential)
+        LOG("Credential stored securely with ID: " + credential_id)
+    FINALLY
+        SECURE_WIPE(credential)  // Clear plaintext from memory
+    END TRY
 
-// Function: retrieve_credential
+/* Function: retrieve_credential */
 FUNCTION retrieve_credential(credential_id)
-    // Retrieve the encrypted credential from the secure vault
+    IF NOT HAS_ACCESS_PERMISSION(credential_id)
+        RAISE AccessDeniedError("Unauthorized access to credential")
+    END IF
+    INCREMENT_ACCESS_COUNTER(credential_id)
+    IF GET_ACCESS_COUNT(credential_id) > DAILY_LIMIT
+        RAISE CredentialOveruseError("Credential access limit exceeded")
+    END IF
     encrypted_credential = RETRIEVE_FROM_VAULT(credential_id)
-    IF encrypted_credential IS NULL THEN
+    IF encrypted_credential IS NULL
         RAISE CredentialNotFoundError("No credential found for ID: " + credential_id)
     END IF
-    // Decrypt the credential
     credential = DECRYPT(encrypted_credential)
-    // Log the retrieval event
     LOG("Credential retrieved for ID: " + credential_id)
     RETURN credential
 
-// Function: delete_credential
+/* Function: delete_credential */
 FUNCTION delete_credential(credential_id)
-    // Remove the credential from the secure vault
+    OVERWRITE_BEFORE_DELETE(credential_id)
     REMOVE_FROM_VAULT(credential_id)
-    // Log the deletion event
     LOG("Credential deleted for ID: " + credential_id)
+
+/* Function: rotate_credential */
+FUNCTION rotate_credential(credential_id, new_credential)
+    IF NOT VALIDATE_CREDENTIAL(new_credential)
+        RAISE InvalidCredentialError("Invalid new credential format")
+    END IF
+    old_credential = CALL retrieve_credential(credential_id)
+    CALL store_credential(credential_id, new_credential)
+    CALL delete_credential(credential_id + ".old")
+    LOG("Credential rotated for ID: " + credential_id)
 ```
 
 ---
 
 ## Notes
-- **Key Management**: Ensure that encryption keys are managed securely, possibly using a hardware security module (HSM).  
-- **Access Control**: Implement strict access controls to prevent unauthorized retrieval of credentials.  
-- **Performance**: Balance security with performance, as encryption and decryption can introduce latency.  
-- **Edge Cases**: Handle scenarios where credentials are not found or decryption fails gracefully.  
-- **TODO**: Add support for credential rotation and expiration to enhance security.  
+- **Key Management**: Encryption keys should be managed securely, ideally using a hardware security module (HSM).
+- **Access Control**: Role-based access controls are enforced for credential retrieval.
+- **Performance**: Balance security with performance; consider caching for frequently used credentials.
+- **Edge Cases**: Handle missing credentials or decryption failures gracefully. 
+- **Rotation Procedures**: Use rotate_credential to periodically refresh credentials.
+- **Compliance**: Aligns with NIST SP 800-63B, PCI DSS 3.2.1, and GDPR Art. 32 for secure credential storage.
+- **TODO**: Implement zero-knowledge proofs for credential verification and quantum-resistant encryption.

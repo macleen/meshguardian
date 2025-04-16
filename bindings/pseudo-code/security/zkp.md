@@ -27,20 +27,25 @@ The detailed logic for the ZKP module is provided below in pseudo-code format, o
 ```pseudocode
 // Function to set up the ZKP system with necessary parameters
 FUNCTION setup_zkp(parameters)
-    // Generate public parameters or keys using the ZKP library
+    IF NOT VALIDATE_ZKP_PARAMS(parameters)
+        RAISE InvalidParametersError("Invalid ZKP parameters")
+    END IF
     public_params = ZKP_LIBRARY.GENERATE_PUBLIC_PARAMS(parameters)
+    LOG_TRUSTED_SETUP_PARTICIPANTS()
     RETURN public_params
 
 // Function to generate a proof for a given statement using a witness
 FUNCTION generate_proof(statement, witness)
-    // Create the proof using the ZKP protocol
-    proof = ZKP_LIBRARY.CREATE_PROOF(statement, witness)
+    nonce = GENERATE_NONCE()
+    proof = ZKP_LIBRARY.CREATE_PROOF(statement, witness, nonce)
     RETURN proof
 
 // Function to verify a proof for a given statement
 FUNCTION verify_proof(proof, statement)
-    // Verify the proof using the ZKP protocol
-    is_valid = ZKP_LIBRARY.VERY_PROOF(proof, statement)
+    IF proof.timestamp < CURRENT_TIME - PROOF_LIFETIME
+        RETURN False
+    END IF
+    is_valid = ZKP_LIBRARY.VERIFY_PROOF(proof, statement)
     RETURN is_valid
 
 ```
@@ -50,7 +55,10 @@ FUNCTION verify_proof(proof, statement)
 
 ## Notes
 - **Scheme Selection**: Different ZKP schemes (e.g., zk-SNARKs, zk-STARKs, Bulletproofs) offer varying trade-offs in terms of security, efficiency, and proof size. Choose based on the specific requirements of the use case.  
-- **Performance**: Generating and verifying proofs can be computationally intensive. Optimize where possible, and consider hardware acceleration for production systems.  
-- **Security**: Ensure the chosen ZKP scheme is resistant to known attacks and that parameters are set appropriately. Keep the witness secret to prevent security breaches.  
-- **Edge Cases**: Handle scenarios where proofs are invalid or where the witness is incorrect. Implement robust error handling to manage these cases gracefully.  
-- **TODO**: Implement specific ZKP schemes like zk-SNARKs or Bulletproofs for targeted applications, and integrate with existing cryptographic libraries for security auditing.  
+- **Performance**: Generating and verifying proofs can be computationally intensive. Optimize where possible, and consider hardware acceleration for production systems.
+- **Security**:  Ensure the chosen ZKP scheme is resistant to known attacks and that parameters are set appropriately. Keep the witness secret to prevent security breaches.
+- **Edge Cases**: Handle scenarios where proofs are invalid or where the witness is incorrect. Implement robust error handling to manage these cases gracefully.
+- **TODO**: Implement specific ZKP schemes like zk-SNARKs or Bulletproofs for targeted applications.
+- Integrate with existing cryptographic libraries for security auditing.
+- Add side-channel attack protections (e.g., timing attack resistance).
+- Implement detailed audit logging for production use.
