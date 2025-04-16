@@ -36,24 +36,23 @@ Proper IV/nonce handling is essential to prevent vulnerabilities such as replay 
 ```pseudocode
 
 /* Function: generate_nonce */
-FUNCTION generate_nonce()
-    nonce = RANDOM_BYTES(12)  // 96-bit nonce for AES-GCM standard
+FUNCTION generate_nonce(context)
+    sequence = GET_NEXT_SEQUENCE(context)
+    random_part = RANDOM_BYTES(8)
+    nonce = sequence + random_part
     RETURN nonce
 
-/* Function: validate_nonce */
 FUNCTION validate_nonce(nonce, context)
     IF NONCE_EXISTS(context, nonce) THEN
         RAISE NonceReuseError("Nonce already used in this context")
     END IF
 
-/* Function: store_nonce */
-FUNCTION store_nonce(nonce, context)
-    APPEND_TO_NONCE_LOG(context, nonce)
+FUNCTION store_nonce(nonce, context, expiration_time)
+    APPEND_TO_NONCE_LOG(context, nonce, expiration_time)
 
-/* Function: expire_nonces */
 FUNCTION expire_nonces(context)
-    DELETE_NONCES_FOR_CONTEXT(context)
-    LOG("Nonces expired for context: " + context)
+    DELETE_EXPIRED_NONCES(context)
+    LOG("Expired nonces for context: " + context)
 ```
 
 ---

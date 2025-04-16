@@ -29,31 +29,31 @@ This module is referenced in the following use cases:
 The core logic of the module is outlined below in pseudocode:
 
 ```pseudocode
-FUNCTION encrypt_data(data, key)
-    // Encrypts data with the provided key
-    IF key IS NULL OR key IS INVALID
-        RAISE InvalidKeyError("Encryption key is invalid or missing")
-    encrypted_data = CALL crypto_library.encrypt(data, key)
-    RETURN encrypted_data
+FUNCTION encrypt_data(data, master_key, context)
+    session_key = derive_key(master_key, context)
+    nonce = generate_nonce()
+    encrypted_data, tag = AES_GCM_ENCRYPT(session_key, nonce, data)
+    RETURN nonce + encrypted_data + tag
 
-FUNCTION decrypt_data(encrypted_data, key)
-    // Decrypts data with the provided key
-    IF key IS NULL OR key IS INVALID
-        RAISE InvalidKeyError("Decryption key is invalid or missing")
-    decrypted_data = CALL crypto_library.decrypt(encrypted_data, key)
-    RETURN decrypted_data
+FUNCTION decrypt_data(encrypted_data, master_key, context)
+    session_key = derive_key(master_key, context)
+    nonce = EXTRACT_NONCE(encrypted_data)
+    ciphertext = EXTRACT_CIPHERTEXT(encrypted_data)
+    tag = EXTRACT_TAG(encrypted_data)
+    RETURN AES_GCM_DECRYPT(session_key, nonce, ciphertext, tag)
 
 FUNCTION generate_key()
-    // Generates a new encryption key
-    new_key = CALL key_management.generate_key()
-    RETURN new_key
+    RETURN CALL key_management.generate_key()
 
 FUNCTION load_key(key_name)
-    // Loads an existing key by name
-    IF key_name NOT IN key_management.keys
-        RAISE KeyNotFoundError("Key '" + key_name + "' not found")
-    key = CALL key_management.load_key(key_name)
-    RETURN key
+    RETURN CALL key_management.load_key(key_name)
+
+FUNCTION derive_key(master_key, context)
+    RETURN HKDF(master_key, context)
+
+FUNCTION generate_nonce()
+    RETURN SECURE_RANDOM(12)
+
 ```
 
 ---

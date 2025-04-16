@@ -38,37 +38,46 @@ It provides mechanisms to revoke compromised credentials, regenerate fresh keys,
 
 /* Function: revoke_node_credentials */
 FUNCTION revoke_node_credentials(node_id)
-    DELETE_KEYS(node_id)
-    DELETE_TOKENS(node_id)
-    LOG("Credentials revoked for node: " + node_id)
+    TRY
+        DELETE_KEYS(node_id)
+        DELETE_TOKENS(node_id)
+        CALL broadcast_revocation(node_id)
+    CATCH error
+        LOG_IMMEDIATE("Failed to revoke credentials for node: " + node_id + " - " + error)
+        RAISE RevocationError("Revocation failed")
+    END TRY
 
-/* Function: regenerate_system_keys */
 FUNCTION regenerate_system_keys(scope)
     new_keys = GENERATE_NEW_KEYS(scope)
-    DISTRIBUTE_KEYS(scope, new_keys)
+    CALL secure_broadcast(new_keys)
+    SLEEP(ROTATION_GRACE_PERIOD)
+    DEPRECATE_KEYS(previous_gen)
     LOG("New keys issued for scope: " + scope)
 
-/* Function: broadcast_revocation */
 FUNCTION broadcast_revocation(node_id)
     message = CREATE_REVOCATION_NOTICE(node_id)
     BROADCAST_TO_NETWORK(message)
+    WAIT_FOR_ACKS(message)
+    IF NOT ALL_ACKS_RECEIVED THEN
+        REBROADCAST(message)
+    END IF
     LOG("Revocation notice sent for node: " + node_id)
 
-/* Function: audit_breach */
-FUNCTION audit_breach(node_id, timeframe)
-    events = FETCH_LOGS(node_id, timeframe)
-    FOR EACH event IN events
-        ANALYZE(event)
-    END FOR
-    RETURN audit_report
+FUNCTION check_compromise_signatures()
+    IF detect_duplicate_nonces() OR verify_failed_attempts > THRESHOLD THEN
+        CALL revoke_node_credentials(suspicious_node_id)
+    END IF
 
-/* Function: quarantine_node */
+FUNCTION enforce_re_authentication(node_id)
+    IF NOT RE_AUTHENTICATE(node_id) THEN
+        CALL quarantine_node(node_id)
+    END IF
+
 FUNCTION quarantine_node(node_id)
     MOVE_TO_QUARANTINE_ZONE(node_id)
     RESTRICT_TRAFFIC(node_id)
     FLAG_FOR_MONITORING(node_id)
     LOG("Node quarantined: " + node_id)
-
 ```
 
 ## Notes:
