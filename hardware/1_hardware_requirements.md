@@ -1,36 +1,36 @@
-# 🛠️ Hardware Requirements for MeshGuardian Node
+# Hardware Requirements for MeshGuardian Node
 
 This document outlines the hardware components required to build a **MeshGuardian node** using a **Raspberry Pi**. These nodes are designed to operate within a **mesh network**, providing secure communication in environments with limited or no connectivity—such as rural areas, disaster response zones, or field operations.
 
 ---
 
-## ✅ Required Components
+## Required Components
 
-### 📦 Raspberry Pi
+### Raspberry Pi
 - **Recommended:** Raspberry Pi 4 — ideal for high-performance tasks and complex routing.
 - **Alternative:** Raspberry Pi Zero 2W — suitable for low-power, lightweight setups.
 
-### ⚡ Power Supply
+### Power Supply
 - **For Raspberry Pi 4:** USB-C power adapter (5V, 3A).
 - **For Raspberry Pi Zero 2W:** Micro-USB power adapter (5V, 2.5A).
 
-### 💾 MicroSD Card
+### MicroSD Card
 - **Minimum:** Class 10, 16GB or greater.
 - **Recommendation:** Use a high-quality brand to ensure reliability and prevent data corruption.
 
-### 📡 Wireless Communication Module
+### Wireless Communication Module
 - A **LoRa HAT** or other compatible wireless module (e.g., Zigbee) depending on your use case.
 - Ensure compatibility with your Raspberry Pi model and desired communication protocol.
 
-### 🧱 Case
+### Case
 - A **protective enclosure** to house the Raspberry Pi and wireless hardware—especially critical for field deployments.
 
-### 🔋 Optional: Battery Pack
+### Optional: Battery Pack
 - A **portable power source** (USB battery bank or solar solution) for off-grid, mobile, or emergency deployment scenarios.
 
 ---
 
-## 💡 Notes and Recommendations
+## Notes and Recommendations
 
 ### Raspberry Pi Selection
 - Use **Raspberry Pi 4** for performance-intensive deployments (e.g., multi-hop routing, real-time communication).
@@ -59,7 +59,7 @@ This document outlines the hardware components required to build a **MeshGuardia
 
 ---
 
-## 📘 Next Step
+## Next Step
 
 Once you’ve gathered the required components, proceed to [`2_step_by_step_process.md`](./2_step_by_step_process.md) for instructions on assembling and configuring your MeshGuardian node.
 
