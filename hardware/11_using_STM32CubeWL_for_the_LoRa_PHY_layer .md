@@ -64,9 +64,10 @@ Verify with VNA:
 Target VSWR: < 1.5:1 at 868/915 MHz
 
 ## 3. Integration with Firmware
-Compatible with:  
-LoRaMac-node (official Semtech stack included in CubeWL)  
-Zephyr RTOS via STM32 HAL drivers  
+### Compatible With:
+- **LoRaMac-node** (official Semtech stack included in CubeWL)
+- **Zephyr RTOS** via STM32 HAL drivers  
+
 Example: OTAA Join Request 
 ```c
     MlmeReqJoin_t joinParams = {
