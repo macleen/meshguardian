@@ -1,11 +1,11 @@
 
-# ⚖️ MeshGuardian Consensus Engine
+# MeshGuardian Consensus Engine
 
 The MeshGuardian Consensus Engine ensures decentralized agreement on packet validation, blockchain-backed audit logging, and trust propagation—tailored for Delay-Tolerant Networks (DTNs), disaster zones, and interplanetary networks.
 
 ---
 
-## 🧠 Purpose
+## Purpose
 
 - Establish global trust in decentralized environments
 - Validate packets under zero-trust conditions
@@ -14,21 +14,21 @@ The MeshGuardian Consensus Engine ensures decentralized agreement on packet vali
 
 ---
 
-## 🔄 Supported Consensus Mechanisms
+## Supported Consensus Mechanisms
 
-### ✅ Proof-of-Stake (PoS)
+### Proof-of-Stake (PoS)
 
 - Used for low-priority packets (default)
 - Energy-efficient, ideal for IoT and remote nodes
 - Leader election based on stake and signal strength
 
-### ✅ Practical Byzantine Fault Tolerance (PBFT)
+### Practical Byzantine Fault Tolerance (PBFT)
 
 - Used for high-priority packets (`Bit 3 = 1`)
 - Ensures strong agreement across a quorum of nodes
 - Used in critical infrastructure and safety-of-life deployments
 
-### ✅ Hybrid Mode
+### Hybrid Mode
 
 - Toggles between PoS and PBFT based on:
   - `consensus_mode_flag`
@@ -37,7 +37,7 @@ The MeshGuardian Consensus Engine ensures decentralized agreement on packet vali
 
 ---
 
-## 🔎 Validation Flow
+## Validation Flow
 
 1. **Packet arrives** → Header is parsed.
 2. **Signature checked** → If valid, continue.
@@ -50,7 +50,7 @@ The MeshGuardian Consensus Engine ensures decentralized agreement on packet vali
 
 ---
 
-## 📦 Packet Fields Involved
+## Packet Fields Involved
 
 - `consensus_mode_flag`: indicates PoS, PBFT, or hybrid
 - `pbft_leader_id`: used during quorum rounds
@@ -59,14 +59,14 @@ The MeshGuardian Consensus Engine ensures decentralized agreement on packet vali
 
 ---
 
-## 🧪 Conflict Resolution
+## Conflict Resolution
 
 - Uses sequence numbers and logical timestamps (Lamport)
 - Deterministic fork resolution with lowest hash + quorum sync
 
 ---
 
-## 🔐 Security Features
+## Security Features
 
 - Zero-trust validation model
 - Quantum-ready signature handling
@@ -74,7 +74,7 @@ The MeshGuardian Consensus Engine ensures decentralized agreement on packet vali
 
 ---
 
-## 📚 Related
+## Related
 
 - [packet_structure.md](./packet_structure.md)
 - [synchronization.md](./synchronization.md)
