@@ -48,6 +48,6 @@ Hardware isn’t just a backdrop in MeshGuardian—it’s a **dynamic partner in
 
 ## 📁 More info
 
-- [hardware_config.md](/pseudo-code/device/hardware_config.md)
-- [node_monitor.md](/monitoring/node_monitor.md)
-- [packet_creation.md](/networking/packet_creation.md)
+- [hardware_config.md](hardware_config.md)
+- [node_monitor.md](./../monitoring/node_monitor.md)
+- [packet_creation.md](./../networking/packet_creation.md)
