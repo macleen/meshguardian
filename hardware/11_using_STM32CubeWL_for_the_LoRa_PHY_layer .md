@@ -88,11 +88,14 @@ Example: OTAA Join Request
 | Certification Readiness| ✅ Pre-tested (ETSI)       | ❌ Requires full re-test             |
 
 
-**Critical Implementation Checks**
-Clock Configuration  
-Ensure TCXO is enabled (if used).  
-CubeWL expects a 32 MHz reference clock in SystemClock_Config().  
-Power Management  
+
+### Critical Implementation Checks
+
+- **Clock Configuration**
+  - Ensure TCXO is enabled (if used).
+  - CubeWL expects a 32 MHz reference clock in `SystemClock_Config()`.
+
+**Power Management**
 Enter low-power mode with:  
 ```c
     HAL_SUBGHZ_SetLowPowerMode();
