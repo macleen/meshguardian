@@ -1,6 +1,6 @@
 # Feasibility Review for MeshGuardian Node
 
-![Alt Text](./PCB_assembly_drawing.png)
+![Alt Text](/docs/assets/PCB_assembly_drawing.png)
 
 This document provides a feasibility review of the hardware components and design choices for building a MeshGuardian node. It focuses on key areas including **MCU & LoRa integration**, **GPS module**, **power management**, **sensors**, and **PCB layout analysis**.
 

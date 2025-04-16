@@ -10,7 +10,7 @@ MeshGuardian is a next-generation protocol stack designed to keep communication 
 
 ---
 
-![MeshGuardian vs. Others](docs/assets/mesh_comparison.webp)
+![MeshGuardian vs. Others](/docs/assets/mesh_comparison.webp)
 
 ## Key Features
 
@@ -106,7 +106,7 @@ MeshGuardian supports SDKs in many popular languages—each with its own entry p
 ├── java/  
 ├── go/  
 ├── javascript/  
-├── php/  
+├── pseudo-code/  
 ├── rust/  
   
   

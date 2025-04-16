@@ -1,11 +1,11 @@
 
-# 📦 MeshGuardian Packet Structure
+# MeshGuardian Packet Structure
 
 The MeshGuardian protocol uses a modular, secure, and extensible packet structure designed for Delay-Tolerant Networks (DTNs) and challenging connectivity environments.
 
 ---
 
-## 🧱 Packet Segments
+## Packet Segments
 
 | Segment   | Size         | Description |
 |-----------|--------------|-------------|
@@ -18,7 +18,7 @@ The MeshGuardian protocol uses a modular, secure, and extensible packet structur
 
 ---
 
-## 🔐 Header (128 bytes)
+## Header (128 bytes)
 
 Includes:
 - `Version` (1B), `Packet Type` (1B), `Priority` (1B)
@@ -32,7 +32,7 @@ Includes:
 
 ---
 
-## 📦 Payload (Variable Size)
+## Payload (Variable Size)
 
 The payload includes:
 - Encrypted JSON or binary message
@@ -43,14 +43,14 @@ Payload is compressed (e.g., zlib, Brotli) **before** encryption.
 
 ---
 
-## 🧾 Trailer (96 bytes)
+## Trailer (96 bytes)
 
 - **Signature (64B):** Ensures authenticity (e.g., Schnorr)
 - **Audit Trail Hash (32B):** Used for local + blockchain logging (e.g., Solana Tier 1)
 
 ---
 
-## 🔐 Security & Trust
+## Security & Trust
 
 Each packet is validated using:
 - Sequence Number + Timestamp for deduplication
@@ -59,7 +59,7 @@ Each packet is validated using:
 
 ---
 
-## 📚 See Also
+## See Also
 
 - [consensus_engine.md](./consensus_engine.md)
 - [synchronization.md](./synchronization.md)

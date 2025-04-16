@@ -2,7 +2,7 @@
 
 This document provides detailed instructions for configuring the **wireless communication module** (e.g., LoRa HAT) on your Raspberry Pi-based MeshGuardian node. Proper configuration is essential for enabling **mesh networking capabilities**, especially in environments with limited or no connectivity.
 
-![Wireless Module Configuration Diagram](wireless_module_configuration.png)
+![Wireless Module Configuration Diagram](/docs/assets/wireless_module_configuration.png)
 
 ---
 

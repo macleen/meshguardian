@@ -1,13 +1,13 @@
 
-# 🔐 LEGAL.md — Intellectual Property & Licensing for MeshGuardian
+# LEGAL.md — Intellectual Property & Licensing for MeshGuardian
 
-## 📘 Overview
+## Overview
 
 MeshGuardian™ is a secure, decentralized networking protocol designed for Delay-Tolerant Networks (DTNs). All core concepts, technical designs, and unique architectural components are the original intellectual property of **Chokri Mahmoud**.
 
 ---
 
-## 📜 Copyright Notice
+## Copyright Notice
 
 © 2025 Chokri Mahmoud. All rights reserved.
 
@@ -15,7 +15,7 @@ MeshGuardian™ and its logo, naming convention, and full-stack design are prote
 
 ---
 
-## 🧠 Patent Status
+## Patent Status
 
 The MeshGuardian protocol is **Patent Pending** with the **US Patent Office (USPTO)**.
 
@@ -31,7 +31,7 @@ Any attempt to replicate, commercialize, or rebrand these features without permi
 
 ---
 
-## ⚖️ License Summary
+## License Summary
 
 This repository is released under the **Apache 2.0 License**, which allows:
 
@@ -47,7 +47,7 @@ But requires:
 
 ---
 
-## 🤝 Contributor Terms
+## Contributor Terms
 
 All contributors must sign the [CLA](docs/CLA.md). By submitting a pull request, you agree to:
 
@@ -57,7 +57,7 @@ All contributors must sign the [CLA](docs/CLA.md). By submitting a pull request,
 
 ---
 
-## 💬 Questions?
+## Questions?
 
 For licensing inquiries, commercial partnerships, or legal correspondence:
 

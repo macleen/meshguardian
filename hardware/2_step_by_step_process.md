@@ -2,7 +2,7 @@
 
 This guide provides a structured process for assembling and configuring a MeshGuardian node using a Raspberry Pi. It covers everything from preparing the hardware to installing the software, ensuring your node is ready for testing and deployment.
 
-![Alt Text](./node_setup.png)
+![Alt Text](/docs/assets/node_setup.png)
 
 ---
 

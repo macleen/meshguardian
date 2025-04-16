@@ -1,5 +1,5 @@
 
-# 🤝 Contributing to MeshGuardian
+# Contributing to MeshGuardian
 
 [Full documentation available at https://meshguardian.com](https://meshguardian.com)
 
@@ -7,7 +7,7 @@ We’re thrilled that you’re considering contributing to **MeshGuardian**, a r
 
 ---
 
-## 🧭 Ground Rules
+## Ground Rules
 
 - Be respectful, inclusive, and patient.
 - Follow the [Code of Conduct](CODE_OF_CONDUCT.md).
@@ -16,7 +16,7 @@ We’re thrilled that you’re considering contributing to **MeshGuardian**, a r
 
 ---
 
-## 🛠️ How to Contribute
+## How to Contribute
 
 ### 1. Fork the Repo
 
@@ -60,7 +60,7 @@ Then go to GitHub and open a pull request!
 
 ---
 
-## ✅ Contribution Checklist
+## Contribution Checklist
 
 - [ ] I’ve signed the [CLA](docs/CLA.md).
 - [ ] My code builds cleanly and passes existing tests.
@@ -70,7 +70,7 @@ Then go to GitHub and open a pull request!
 
 ---
 
-## 🧪 Running Tests
+## Running Tests
 
 Each SDK may include its own test suite. Refer to that SDK's `README.md`.
 
@@ -83,7 +83,7 @@ pytest tests/
 
 ---
 
-## 💬 Join the Discussion
+## Join the Discussion
 
 We’re building something for the world’s most disconnected regions. If you want to help shape the future of networking for off-grid, edge, and extraterrestrial scenarios—come talk to us.
 

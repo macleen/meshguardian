@@ -1,11 +1,11 @@
 
-# 🔁 MeshGuardian Synchronization Mechanism
+# MeshGuardian Synchronization Mechanism
 
 MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) through a robust, energy-aware synchronization engine. This system adapts to scenarios where nodes may be offline for extended periods or connected only intermittently.
 
 ---
 
-## 🎯 Purpose
+## Purpose
 
 - Prevent data loss and duplication in disconnected networks
 - Enable causal and temporal ordering across async nodes
@@ -14,7 +14,7 @@ MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) thro
 
 ---
 
-## 🔧 Key Features
+## Key Features
 
 - **Nano-Sync Packets**  
   Minimal overhead sync messages (~10 bytes) for extreme low-power operation.
@@ -33,7 +33,7 @@ MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) thro
 
 ---
 
-## 🗂 Use Cases
+## Use Cases
 
 - First responders syncing bodycam footage in disaster zones
 - Mars rover syncing telemetry to Earth during blackout windows
@@ -41,7 +41,7 @@ MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) thro
 
 ---
 
-## 📦 Relevant Packet Fields
+## Relevant Packet Fields
 
 | Field              | Size | Description |
 |-------------------|------|-------------|
@@ -54,7 +54,7 @@ MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) thro
 
 ---
 
-## 🔒 Audit + Integrity
+## Audit + Integrity
 
 - Tier 1: Critical events → Blockchain
 - Tier 2: Local log + P2P sync
@@ -62,7 +62,7 @@ MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) thro
 
 ---
 
-## 🔌 Plugin-Enhanced Sync
+## Plugin-Enhanced Sync
 
 - AI-powered merge arbitration (planned)
 - Redundancy-aware multi-path re-sync
@@ -70,7 +70,7 @@ MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) thro
 
 ---
 
-## 📚 Related Specs
+## Related Specs
 
 - [packet_structure.md](./packet_structure.md)
 - [consensus_engine.md](./consensus_engine.md)
