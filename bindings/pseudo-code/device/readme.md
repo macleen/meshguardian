@@ -1,6 +1,6 @@
 # Hardware Integration in MeshGuardian Protocol Stack
 
-![Hardware Integration Diagram](./hardware_integration_diagram.png)
+![Hardware Integration Diagram](/docs/assets/hardware_integration_diagram.png)
 
 ## Overview
 

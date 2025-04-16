@@ -34,6 +34,9 @@ FUNCTION check_rate_limit(source)
         RESET_ATTEMPTS(source)
         RETURN False  // Limit not exceeded
     END IF
+    IF attempts >= max_attempts * WARNING_THRESHOLD THEN
+        LOG_POTENTIAL_ATTACK(source)
+    END IF
     IF attempts >= max_attempts THEN
         RETURN True  // Limit exceeded
     ELSE
@@ -41,48 +44,72 @@ FUNCTION check_rate_limit(source)
     END IF
 
 // Function: record_attempt
-FUNCTION record_attempt(source)
+FUNCTION record_attempt(source, success)
     attempts, last_attempt_time = GET_ATTEMPT_DATA(source)
     IF CURRENT_TIME - last_attempt_time > time_window THEN
         SET_ATTEMPTS(source, 1)
     ELSE
-        SET_ATTEMPTS(source, attempts + 1)
+        IF NOT success THEN
+            SET_ATTEMPTS(source, attempts + 1)
+        ELSE
+            RESET_ATTEMPTS(source)  // Reward successful auth
+        END IF
     END IF
     SET_LAST_ATTEMPT_TIME(source, CURRENT_TIME)
+    ENCRYPT_AND_STORE(source, {attempts, last_attempt_time})
 
 // Function: reset_attempts
 FUNCTION reset_attempts(source)
     SET_ATTEMPTS(source, 0)
     SET_LAST_ATTEMPT_TIME(source, NULL)
+    ENCRYPT_AND_STORE(source, {0, NULL})
 
-// Function: configure_rate_limit
+// Function: configure_rate_limit(max_attempts, time_window)
 FUNCTION configure_rate_limit(max_attempts, time_window)
-    SET_MAX_ATTEMPTS(max_attempts)
+    IF is_new_device(source) THEN
+        SET_MAX_ATTEMPTS(LOWER_LIMIT)
+    ELSE
+        SET_MAX_ATTEMPTS(max_attempts)
+    END IF
     SET_TIME_WINDOW(time_window)
+    IF max_attempts IS NULL THEN
+        SET_MAX_ATTEMPTS(5)  // Fail-secure default
+    END IF
 
 // Helper functions
 FUNCTION GET_ATTEMPT_DATA(source)
-    // Retrieve attempts and last_attempt_time from storage
-    RETURN attempts, last_attempt_time
+    IF CACHE_HAS(source) THEN
+        RETURN CACHE_GET(source)
+    ELSE
+        data = DECRYPT_STORAGE(STORAGE_GET(source))
+        CACHE_SET(source, data)
+        RETURN data
+    END IF
 
 FUNCTION SET_ATTEMPTS(source, attempts)
-    // Store the attempt count for the source
+    ENCRYPT_AND_STORE(source, attempts)
 
 FUNCTION SET_LAST_ATTEMPT_TIME(source, time)
-    // Store the last attempt timestamp for the source
+    ENCRYPT_AND_STORE(source, {GET_ATTEMPTS(source), time})
 
-FUNCTION SET_MAX_ATTEMPTS(max_attempts)
-    // Set the maximum allowed attempts
+FUNCTION ENCRYPT_AND_STORE(source, data)
+    encrypted_data = ENCRYPT(data)
+    STORE_IN_RATE_LIMIT_STORAGE(source, encrypted_data)
 
-FUNCTION SET_TIME_WINDOW(time_window)
-    // Set the time window for rate limiting
+FUNCTION is_new_device(source)
+    // Check if source is a new device based on historical data or risk signals
+    RETURN IS_NEW_DEVICE(source)
 ```
 
 ---
 
 ## Notes
 - **Granularity**: The `source` can be a user ID, IP address, or a combination, depending on the desired rate limiting strategy.  
-- **Storage**: Use a secure and efficient storage mechanism (e.g., in-memory cache, database) to handle frequent reads and writes.  
-- **Performance**: Ensure that rate limiting checks do not introduce significant latency to the authentication process.  
-- **Security**: Protect rate limit data from tampering to prevent attackers from bypassing limits.  
-- **TODO**: Implement adaptive rate limiting based on threat intelligence or anomaly detection.  
+- **Storage**: Uses encrypted storage to protect attempt data from tampering, with a cache layer for performance. 
+- **Performance**: Caching optimizes frequent reads, minimizing latency in high-volume systems.
+- **Security**: Protects against time manipulation with monotonic clocks (implied) and storage tampering with encryption.
+- **Adaptive Limiting**: Adjusts max_attempts for new devices or based on risk signals from /pseudo-code/security/risk_assessment.md.
+
+
+
+**TODO**: Integrate machine learning for anomaly detection and WAF/CDN integration for distributed protection.

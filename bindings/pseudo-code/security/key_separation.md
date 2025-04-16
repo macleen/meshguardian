@@ -35,21 +35,26 @@ This prevents cross-use of keys between different security domains (e.g., encryp
 ```pseudocode
 /* Function: generate_key */
 FUNCTION generate_key(context)
-    raw_key = CRYPTO_GENERATE_KEY()
+    master_key = GET_MASTER_KEY()
+    key = HKDF(master_key, salt=context, info="key_separation")
     key_id = GENERATE_UNIQUE_ID()
     CALL tag_key(key_id, context)
-    CALL store_key(key_id, raw_key)
+    CALL store_key(key_id, key)
     RETURN key_id
 
 /* Function: tag_key */
 FUNCTION tag_key(key_id, purpose)
-    // Example: "encryption", "authentication", "signature"
+    IF HAS_HSM THEN
+        HSM_SET_USAGE_POLICY(key_id, purpose)
+    END IF
     SET_KEY_METADATA(key_id, "purpose", purpose)
+    LOG("Key tagged with purpose: " + purpose + " for ID: " + key_id)
 
 /* Function: validate_purpose */
 FUNCTION validate_purpose(key_id, requested_purpose)
     stored_purpose = GET_KEY_METADATA(key_id, "purpose")
     IF stored_purpose != requested_purpose THEN
+        LOG("Key usage violation attempt for ID: " + key_id)
         RAISE KeyUsageViolationError("Key not valid for purpose: " + requested_purpose)
     END IF
 
@@ -57,6 +62,7 @@ FUNCTION validate_purpose(key_id, requested_purpose)
 FUNCTION use_key(key_id, purpose)
     CALL validate_purpose(key_id, purpose)
     key = CALL retrieve_key(key_id)
+    LOG("Key used for purpose: " + purpose + " with ID: " + key_id)
     RETURN key
 
 ```

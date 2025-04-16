@@ -31,32 +31,53 @@ and encryption processes.
 ## Pseudo-code
 ```pseudocode
 /* Function: derive_key */
-FUNCTION derive_key(input, salt, iterations, key_length)
-    // Use a secure key derivation function to generate the key
-    derived_key = KDF(input, salt, iterations, key_length)
-    // Validate the derived key
-    CALL validate_key(derived_key, key_length)
+FUNCTION derive_key(input, salt, iterations, key_length, kdf_type)
+    // Validate parameters
+    IF iterations < MIN_ITERATIONS[kdf_type] THEN
+        RAISE UnsafeParametersError("Iterations below minimum for " + kdf_type)
+    END IF
+    // Allocate secure memory for the key
+    TRY
+        derived_key = SECURE_ALLOC(key_length)
+        // Select and apply the appropriate KDF
+        IF kdf_type == "PBKDF2" THEN
+            derived_key = PBKDF2(input, salt, iterations, key_length)
+        ELSE IF kdf_type == "ARGON2ID" THEN
+            derived_key = ARGON2(input, salt, iterations, MEMORY_COST, PARALLELISM)
+        ELSE
+            RAISE UnsupportedKDFError("Unsupported KDF type: " + kdf_type)
+        END IF
+        // Validate the derived key
+        CALL validate_key(derived_key, key_length)
+    FINALLY
+        SECURE_WIPE(input)  // Clear sensitive input data
+    END TRY
     RETURN derived_key
 
-/* Function: generate_salt */
-FUNCTION generate_salt()
-    // Generate a cryptographically secure random salt
-    salt = RANDOM_BYTES(salt_length)
-    RETURN salt
+/* Function: generate_salt(key_purpose) */
+FUNCTION generate_salt(key_purpose)
+    // Generate a cryptographically secure salt with minimum length
+    salt = RANDOM_BYTES(16) + UTF8_ENCODE(key_purpose)
+    salted_hash = HASH(salt)  // Prevent length leaks
+    RETURN salted_hash
 
 /* Function: validate_key */
 FUNCTION validate_key(key, expected_length)
     IF LENGTH(key) != expected_length THEN
         RAISE KeyValidationError("Derived key does not meet the expected length")
     END IF
-    // Additional validation checks can be added here
+    IF CALC_ENTROPY(key) < MIN_ENTROPY THEN
+        RAISE WeakKeyError("Insufficient key entropy")
+    END IF
 ```
 
 ---
 
 ## Notes:
-- Key Derivation Function (KDF): Use a computationally intensive KDF (e.g., PBKDF2 with high iterations or Argon2) to resist brute-force attacks.
-- Salt Usage: Always use a unique, random salt per derivation to prevent rainbow table attacks.
-- Iterations: Set a high iteration count to slow derivation, deterring brute-force attempts.
-- Key Length: Ensure the key meets the length needs of the target cryptographic algorithm.
-- TODO: Add support for multiple KDFs for flexibility across system requirements.
+- Key Derivation Function (KDF): Supports PBKDF2 and Argon2id, with configurable iterations to resist brute-force attacks.
+- Salt Usage: Unique salts with context binding prevent rainbow table attacks and ensure per-purpose security.
+- Iterations: Minimum iterations are enforced (e.g., 100,000 for PBKDF2, 3 for Argon2) to enhance resistance.
+- Key Length: Matches algorithm requirements (e.g., 32 bytes for AES-256).
+- Memory Security: Uses secure allocation and wiping to prevent memory scraping attacks.
+- TODO: Add hardware acceleration support for KDF computation.
+- TODO: Implement side-channel resistance techniques (e.g., constant-time operations).
