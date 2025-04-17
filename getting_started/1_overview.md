@@ -60,10 +60,10 @@ MeshGuardian aims to **bridge that gap** by enabling secure, store-and-forward c
 
 Choose your path:
 
-- 🔧 **[Hardware Setup](2_hardware_quickstart.md)** → Build a node with Raspberry Pi or STM32WL
-- 💻 **[Firmware Setup](3_firmware_quickstart.md)** → Flash the core MeshGuardian logic
-- 📡 **[Protocol Simulation](4_protocol_demo.md)** → Run a minimal demo of packet routing
-- 🔐 **[Security Introduction](5_security_basics.md)** → Understand our approach to cryptographic safety
+- **[Hardware Setup](2_hardware_quickstart.md)** → Build a node with Raspberry Pi or STM32WL
+- **[Firmware Setup](3_firmware_quickstart.md)** → Flash the core MeshGuardian logic
+- **[Protocol Simulation](4_protocol_demo.md)** → Run a minimal demo of packet routing
+- **[Security Introduction](5_security_basics.md)** → Understand our approach to cryptographic safety
 
 ---
 

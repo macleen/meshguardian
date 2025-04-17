@@ -1,10 +1,10 @@
-# 🔌 3. Firmware Quickstart: Flashing MeshGuardian to STM32WL
+# 3. Firmware Quickstart: Flashing MeshGuardian to STM32WL
 
 This guide walks you through setting up and flashing the **MeshGuardian firmware** to your **STM32WL** device using **STM32CubeIDE** or **Zephyr RTOS** (depending on your stack choice).
 
 ---
 
-## 🚦 Supported Platforms
+## Supported Platforms
 
 | MCU Target       | Stack Option      | Interface         |
 |------------------|-------------------|-------------------|
@@ -16,7 +16,7 @@ This guide walks you through setting up and flashing the **MeshGuardian firmware
 
 ---
 
-## 🛠️ Option 1: Flash with STM32CubeIDE
+## Option 1: Flash with STM32CubeIDE
 
 ### Prerequisites
 
@@ -36,7 +36,7 @@ This guide walks you through setting up and flashing the **MeshGuardian firmware
 4. Build & Flash
 Click the "hammer" (build), then "bug" (debug) to flash and run.
 
-🧠 Code relies on CubeWL’s SUBGHZ HAL driver for RF handling.
+Code relies on CubeWL’s SUBGHZ HAL driver for RF handling.  
 Option 2: Build with Zephyr RTOS (Advanced)  
 Install Zephyr Toolchain  
 ```bash

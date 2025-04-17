@@ -1,4 +1,4 @@
-# 🔗 4. Protocol Demo: MeshGuardian Packet Lifecycle
+# 4. Protocol Demo: MeshGuardian Packet Lifecycle
 
 This guide walks you through a **minimal working demonstration** of MeshGuardian’s protocol, showcasing how a packet is created, validated, routed, and received between nodes.
 
@@ -6,7 +6,7 @@ You'll see how the **pseudo-code** maps to real-world flow using simplified exam
 
 ---
 
-## 🧱 Prerequisites
+## Prerequisites
 
 Before running the protocol demo, make sure you’ve done the following:
 
@@ -16,7 +16,7 @@ Before running the protocol demo, make sure you’ve done the following:
 
 ---
 
-## 📦 Step 1: Create a Packet
+## Step 1: Create a Packet
 
 Module: `/pseudo-code/networking/packet_creation.md`
 
@@ -70,9 +70,8 @@ Receiving	packet_receiving.md	Packet delivered + logged
 
 Optional: Add Compression or Encryption
 Enhance the protocol demo by:
-
-🔒 Using /security/encryption.md to encrypt packet.data
-📦 Using /compression/compression.md to reduce packet size
+- Using /security/encryption.md to encrypt packet.data  
+- Using /compression/compression.md to reduce packet size  
 
 **Next Step**: 5_data_flow.md
 Continue to the next file to understand how the entire data pipeline is structured—across modules, devices, and environments.
