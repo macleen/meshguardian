@@ -1,7 +1,7 @@
 # Packet Module
 
 ## Purpose
-The `Packet` class represents a data packet in the networking system, encapsulating essential attributes like a unique identifier, source, destination, data payload, and communication profile. It provides methods for initializing packets, converting them to dictionaries, and creating instances from dictionaries. This class is crucial for managing packet structure and operations consistently across the system.
+The `Packet` class represents a data packet in the networking system, encapsulating essential attributes like a unique identifier, source, destination, data payload, communication profile, and capability flags. It provides methods for initializing packets, converting them to dictionaries, and creating instances from dictionaries. This class is crucial for managing packet structure and operations consistently across the system, supporting features like ML-driven protocol selection (Bit 13), failure prediction (Bit 14), and blockchain audit logging (Bit 15).
 
 ## Interfaces
 - `__init__(source, dest, data, profile="default")`: Initializes a new packet with the given attributes.
@@ -66,7 +66,13 @@ CLASS Packet
         ELSE
             SET self.capability_flags BIT 14 TO 0
         END IF
-        CALL log_event("PacketInitialized", {"id": self.id, "capability_flags": self.capability_flags})
+        IF node_supports_blockchain_audit()
+            SET self.capability_flags BIT 15 TO 1  // Enable Solana logging
+        ELSE
+            SET self.capability_flags BIT 15 TO 0  // Local logging
+        END IF
+        SET self.capability_flags BIT 16 TO 0  // Reserved for Lightweight Blockchain
+        CALL log_event("PacketInitialized", {"id": self.id, "capability_flags": self.capability_flags}, self.capability_flags)
 
     METHOD to_dict()
         """
@@ -100,6 +106,8 @@ CLASS Packet
 ---
 
 ## Notes
-- The Packet class is designed to be simple and focused on managing packet data.
+- The Packet class is designed to be simple and focused on managing packet data, with capability flags supporting ML-driven features (Bits 13 and 14) and blockchain audit logging (Bit 15).
+- Bit 15 (Blockchain Audit): Enables Solana-based logging for critical events; defaults to local logging for compatibility.
+- Bit 16 (Lightweight Blockchain): Reserved for future lightweight blockchain integration.
 - Future enhancements could include adding headers or additional metadata.
 - Consider implementing validation for packet attributes to ensure data integrity.
