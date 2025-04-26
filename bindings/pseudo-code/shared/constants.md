@@ -18,9 +18,10 @@ The Constants module provides a centralized location for defining and accessing 
 
 ## Called By
 - **/pseudo-code/networking/data_transmission.md**: Uses `MAX_PACKET_SIZE` to enforce packet size limits.  
-- **/pseudo-code/security/encryption.md**: References `ENCRYPTION_ALGORITHM` for cryptographic operations.  
-- **/pseudo-code/logging/logger.md**: Uses `LOG_LEVEL` to set the initial logging verbosity.  
+- **/pseudo-code/security/encryption.md**:References ENCRYPTION_ALGORITHM for cryptographic operations.
 - **/pseudo-code/audit_trail.md**: Uses BLOCKCHAIN_AUDIT_DEFAULT for logging configuration.
+- **/pseudo-code/networking/packet_sending.md**: Uses MAX_PACKET_SIZE and DEFAULT_TIMEOUT for packet operations.
+
 
 ## Used In
 - **Use Case 5.15: Aid Relays**: Relies on `MAX_PACKET_SIZE` to optimize data transmission in low-bandwidth environments.  
@@ -64,4 +65,5 @@ CONSTANT LIGHTWEIGHT_BLOCKCHAIN_RESERVED = 0  // Placeholder
 - **Immutability**: Constants should be treated as immutable to prevent accidental changes during runtime.  
 - **Configuration**: For values like BLOCKCHAIN_AUDIT_DEFAULT that may vary per deployment, consider using a configuration file or environment variables. 
 - **Scalability**: New constants (e.g., for Bit 16 lightweight blockchain) can be added as the system evolves.
-- **TODO**: Add constants for additional system parameters, such as buffer sizes or retry limits, as needed.
+- **TODO**: Add constants for additional system parameters, such as buffer sizes or retry limits.
+Define constants for adaptive batching intervals in the audit trail.

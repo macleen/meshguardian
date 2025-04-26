@@ -14,7 +14,7 @@ The `Packet` class represents a data packet in the networking system, encapsulat
 ## Called By
 - `/pseudo-code/networking/packet_sending.md`: Uses `Packet` to create and send packets.
 - `/pseudo-code/networking/packet_receiving.md`: Handles incoming packets.
-- `/pseudo-code/networking/packet_routing.md`: Manages packet routing decisions.
+- `/pseudo-code/networking/data_transmission.md`: Manages packet transmission.
 
 ## Used In
 - **Use Case 5.15**: Multi-hop supply tracking in crisis zones.
@@ -56,23 +56,24 @@ CLASS Packet
         self.profile = profile
         // Initialize capability flags
         self.capability_flags = CALL get_capability_flags()
-        IF node_supports_ml_protocol_selection()
+        IF CALL node_supports_ml_protocol_selection()
             SET self.capability_flags BIT 13 TO 1
         ELSE
             SET self.capability_flags BIT 13 TO 0
         END IF
-        IF node_supports_ml_failure_prediction()
+        IF CALL node_supports_ml_failure_prediction()
             SET self.capability_flags BIT 14 TO 1
         ELSE
             SET self.capability_flags BIT 14 TO 0
         END IF
-        IF node_supports_blockchain_audit()
+        IF CALL node_supports_blockchain_audit()
             SET self.capability_flags BIT 15 TO 1  // Enable Solana logging
         ELSE
             SET self.capability_flags BIT 15 TO 0  // Local logging
         END IF
         SET self.capability_flags BIT 16 TO 0  // Reserved for Lightweight Blockchain
         CALL log_event("PacketInitialized", {"id": self.id, "capability_flags": self.capability_flags}, self.capability_flags)
+    END METHOD
 
     METHOD to_dict()
         """
@@ -88,6 +89,7 @@ CLASS Packet
             "profile": self.profile,
             "capability_flags": self.capability_flags
         }
+    END METHOD
 
     CLASS METHOD from_dict(packet_dict)
         """
@@ -101,6 +103,8 @@ CLASS Packet
         packet.id = packet_dict["id"]
         packet.capability_flags = packet_dict["capability_flags"]
         RETURN packet
+    END METHOD
+END CLASS
 ```  
 
 ---
@@ -110,4 +114,8 @@ CLASS Packet
 - Bit 15 (Blockchain Audit): Enables Solana-based logging for critical events; defaults to local logging for compatibility.
 - Bit 16 (Lightweight Blockchain): Reserved for future lightweight blockchain integration.
 - Future enhancements could include adding headers or additional metadata.
-- Consider implementing validation for packet attributes to ensure data integrity.
+- Validation for packet attributes is recommended to ensure data integrity.
+
+## TODO
+- Implement packet attribute validation.
+- Add support for extended headers or metadata fields.
