@@ -17,6 +17,10 @@ errors.
 ## Called By
 - **/pseudo-code/security/auth.md**: Logs authentication events.  
 - **/pseudo-code/networking/data_transmission.md**: Records data transmission events.  
+- **/pseudo-code/networking/packet_sending.md**: Logs packet initialization and sending events.
+- **/pseudo-code/packet.md**: Logs packet initialization events.
+- **/pseudo-code/networking/packet_receiving.md**: Logs packet receipt events.
+
 
 ## Used In
 - **Use Case 5.15: Aid Relays**: Logs supply tracking actions for audit trails in crisis zones.  
@@ -26,6 +30,10 @@ errors.
 ```pseudo-code
 // Function to log an event
 FUNCTION log_event(event_type, details, capability_flags)
+    // Validate inputs
+    IF event_type IS EMPTY OR details IS NULL THEN
+        RAISE LogError("Invalid event type or details")
+    END IF
     // Create a log entry with timestamp, event type, and details
     log_entry = {
         "timestamp": CALL get_current_timestamp(),
@@ -60,6 +68,7 @@ FUNCTION log_event(event_type, details, capability_flags)
         CATCH connection_error
             // Buffer for interplanetary scenarios
             CALL buffer_log(log_entry, zkp_proof)
+            RAISE SolanaConnectionError("Failed to submit to Solana: " + connection_error)
         END TRY
     ELSE
         // Store locally for Tier 2
@@ -67,19 +76,25 @@ FUNCTION log_event(event_type, details, capability_flags)
         // Batch and sync every 10 seconds
         IF CALL time_since_last_sync() >= 10 THEN
             logs_to_sync = CALL get_local_logs()
-            merkle_tree = CALL create_merkle_tree([log.hash FOR log IN logs_to_sync])
-            merkle_root = merkle_tree.root
-            merkle_proofs = merkle_tree.proofs  // 64-byte proofs
-            FOR peer IN CALL get_peers()
-                CALL send_to_peer(peer, merkle_root, merkle_proofs, logs_to_sync)
-            END FOR
-            CALL clear_local_logs()
+            IF NOT EMPTY(logs_to_sync) THEN
+                merkle_tree = CALL create_merkle_tree([log.hash FOR log IN logs_to_sync])
+                merkle_root = merkle_tree.root
+                merkle_proofs = merkle_tree.proofs  // 64-byte proofs
+                FOR peer IN CALL get_peers()
+                    CALL send_to_peer(peer, merkle_root, merkle_proofs, logs_to_sync)
+                END FOR
+                CALL clear_local_logs()
+            END IF
         END IF
     END IF
 END FUNCTION
 
 // Function to retrieve logs based on filter criteria
 FUNCTION get_logs(filter_criteria)
+    // Validate filter criteria
+    IF filter_criteria IS INVALID THEN
+        RAISE LogError("Invalid filter criteria")
+    END IF
     // Retrieve logs that match the filter criteria
     logs = CALL retrieve_logs(filter_criteria)
     RETURN logs
@@ -106,4 +121,7 @@ END FUNCTION
 - **Performance**: Batching Tier 2 logs every 10 seconds minimizes overhead; Tier 1 Solana submissions add 1–2s latency. 
 - **Security**: SHA3-256 hashes, ZKPs, and Solana’s immutability protect logs from tampering. Access is restricted via Biometric Hash and Signature.
 - **Interplanetary Support**: Tier 1 submissions are buffered locally until connectivity is available; Tier 2 logs sync with local peers.
-- **TODO**: Implement log rotation to manage storage efficiently.  
+
+## TODO 
+- Implement log rotation to manage storage efficiently.  
+- Add support for custom event types via the Pluggable Protocol Engine.
