@@ -1,0 +1,74 @@
+folder structure
+
+/pseudo-code/
++-- audit/
+¦   +-- audit_trail.md
++-- compression/
+¦   +-- compression.md
++-- consensus/
+¦   +-- pbft_validation.md
+¦   +-- pos_validation.md
+¦   +-- trust_graphs.md
++-- device/
+¦   +-- hardware_config.md
+¦   +-- hardware_integration_diagram.md
+¦   +-- hardware_interface.md
+¦   +-- readme.md
++-- exceptions/                    # NEW: Shared error classes
+¦   +-- duplicate_id_error.md
+¦   +-- empty_data_error.md
+¦   +-- invalid_profile_error.md
+¦   +-- missing_dest_error.md
+¦   +-- missing_source_error.md
+¦   +-- oversized_data_error.md
+¦   +-- base_exception.md          # (Optional): common base class for all exceptions
++-- integration/
+¦   +-- external_sync.md
++-- hardware/
+¦   +-- readme.md
+¦   +-- 1_hardware_requirements.md
+¦   +-- 2_step_by_step_process.md
+¦   +-- 3_wireless_module_configuration.md
+¦   +-- 4_software_implementation.md
+¦   +-- 5_testing.md
+¦   +-- 6_deployment.md
+¦   +-- 7_additional_considerations.md
+¦   +-- 8_feasability_review.md
+¦   +-- 9_RF_validation_procedure.md
+¦   +-- 10_firmware_integration.md
+¦   +-- 11_using_STM32CubeWL_for_the_LoRa_PHY_layer .md
+¦   +-- 12_PCB_reverse_polarity_protectionusing.md
++-- monitoring/
+¦   +-- node_monitor.md
++-- networking/
+¦   +-- CONTRIBUTING.md
+¦   +-- packet_creation.md
+¦   +-- packet_creator.md
+¦   +-- packet_headers.md
+¦   +-- packet_buffering.md
+¦   +-- packet_routing.md
+¦   +-- packet_validation.md
+¦   +-- packet.md 
++-- protocol/
+¦   +-- profiles.md
+¦   +-- protocol_selector.md
++-- security/
+¦   +-- encryption.md
+¦   +-- key_management.md
+¦   +-- privacy_safe_pod.md
+¦   +-- zkp.md
++-- shared/
+¦   +-- glossary.md
+¦   +-- constants.md
+¦   +-- helpers.md
++-- getting_started/
+¦   +-- 1_overview.md
+¦   +-- 2_hardware_quickstart.md
+¦   +-- 3_firmware_quickstart.md
+¦   +-- 4_protocol_demo.md
+¦   +-- 5_security_basics.md
+¦   +-- 6_visual_walkthrough.md
+¦   +-- 7_troubleshooting.md
+¦   +-- faq.md
++-- flow_chart.md
++-- README.md

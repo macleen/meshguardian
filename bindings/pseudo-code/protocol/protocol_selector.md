@@ -29,17 +29,38 @@ FUNCTION select_protocol(packet, context)
     network_conditions = context.get_network_conditions()
     available_protocols = get_available_protocols()
 
+    IF packet.headers.capability_flags BIT 13
+        // ML-driven protocol selection
+        model = LOAD_TINYML_MODEL("protocol_selection")
+        input_data = [network_conditions.rssi, network_conditions.distance, network_conditions.latency]
+        output = model.predict(input_data)
+        protocol = PARSE_PROTOCOL(output)
+        IF protocol IN available_protocols
+            RETURN protocol
+    END IF
+
+    // Static protocol selection
     IF profile.has_preferred_protocol()
         preferred = profile.get_preferred_protocol()
         IF preferred IN available_protocols
             RETURN preferred
-
-    IF network_conditions.is_high_latency()
+    END IF
+    IF network_conditions.rssi > -90
+        RETURN "Bluetooth"
+    ELSE IF network_conditions.is_high_latency()
         RETURN "reliable_protocol"
     ELSE IF network_conditions.is_low_bandwidth()
         RETURN "efficient_protocol"
     ELSE
         RETURN "default_protocol"
+
+FUNCTION get_available_protocols()
+    // Return list of supported protocols
+    RETURN ["Bluetooth", "LoRa", "reliable_protocol", "efficient_protocol", "default_protocol"]
+
+FUNCTION set_protocol_preference(preference_list)
+    // Store preference order for static selection
+    SET global_protocol_preference TO preference_list
 ```
 
 ---

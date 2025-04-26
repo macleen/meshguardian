@@ -44,6 +44,10 @@ FUNCTION generate_key(context)
 
 /* Function: tag_key */
 FUNCTION tag_key(key_id, purpose)
+    IF purpose IN ["ml_protocol_selection", "ml_failure_prediction"]
+        // Ensure ML-specific keys are tagged for secure model operations
+        SET_KEY_METADATA(key_id, "ml_enabled", TRUE)
+    END IF
     IF HAS_HSM THEN
         HSM_SET_USAGE_POLICY(key_id, purpose)
     END IF

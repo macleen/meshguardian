@@ -29,9 +29,9 @@ The Risk Assessment module dynamically evaluates security risks within the MeshG
 The following pseudo-code outlines the core logic for assessing and managing security risks.
 ```pseudocode
 // Function: assess_risk
-FUNCTION assess_risk(source, behavior_data)
+FUNCTION assess_risk(source, behavior_data, packet)
     risk_profile = RETRIEVE_RISK_PROFILE(source)
-    risk_score, risk_factors = CALCULATE_RISK_SCORE(risk_profile, behavior_data)
+    risk_score, risk_factors = CALCULATE_RISK_SCORE(risk_profile, behavior_data, packet)
     thresholds = get_risk_thresholds()
     IF risk_score > thresholds.critical THEN
         INITIATE_LOCKDOWN(source)
@@ -67,13 +67,22 @@ FUNCTION get_risk_thresholds()
     RETURN thresholds
 
 // Function: calculate_risk_score
-FUNCTION calculate_risk_score(profile, behavior_data)
+FUNCTION calculate_risk_score(profile, behavior_data, packet)
     IF IS_RESOURCE_CONSTRAINED_NODE() THEN
         score = SIMPLE_HEURISTIC_SCORE(behavior_data)
         factors = SIMPLE_RISK_FACTORS(behavior_data)
     ELSE
-        score = ADVANCED_MODEL_SCORE(profile, behavior_data)
-        factors = ADVANCED_RISK_FACTORS(profile, behavior_data)
+        IF packet.capability_flags BIT 14
+            // ML-driven risk assessment
+            model = LOAD_TINYML_MODEL("risk_assessment")
+            input_data = [behavior_data.auth_attempts, behavior_data.geo_anomalies, behavior_data.packet_rate]
+            score = model.predict(input_data)
+            factors = EXTRACT_RISK_FACTORS(model, input_data)
+        ELSE
+            // Heuristic risk assessment
+            score = SIMPLE_HEURISTIC_SCORE(behavior_data)
+            factors = SIMPLE_RISK_FACTORS(behavior_data)
+        END IF
     END IF
     RETURN score, factors
 ```

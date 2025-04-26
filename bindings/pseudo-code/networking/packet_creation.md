@@ -42,7 +42,7 @@ Defines the `PacketCreator` class for initializing packet attributes, the `Packe
 ```pseudocode
 CLASS PacketHeaders
     // Encapsulates packet header attributes for consistency and extensibility.
-    // Defines and validates header metadata (TTL, profile, priority).
+    // Defines and validates header metadata (TTL, profile, priority, capability_flags).
     METHOD __init__(profile)
         valid_profiles = CALL get_valid_profiles()
         IF profile NOT IN valid_profiles
@@ -51,7 +51,19 @@ CLASS PacketHeaders
         self.profile = profile
         self.ttl = CALL get_ttl(profile)
         self.priority = CALL get_priority(profile)
-        CALL log_event("Headers_{profile}", "created")
+        // Initialize capability flags based on node configuration
+        self.capability_flags = CALL get_capability_flags()
+        IF node_supports_ml_protocol_selection()
+            SET self.capability_flags BIT 13 TO 1
+        ELSE
+            SET self.capability_flags BIT 13 TO 0
+        END IF
+        IF node_supports_ml_failure_prediction()
+            SET self.capability_flags BIT 14 TO 1
+        ELSE
+            SET self.capability_flags BIT 14 TO 0
+        END IF
+        CALL log_event("Headers_{profile}", {"profile": profile, "capability_flags": self.capability_flags})
 
 CLASS PacketCreator
     // Creates packet attributes with a unique ID and validated headers.
@@ -81,7 +93,7 @@ CLASS PacketCreator
             "headers": headers
         }
 
-        CALL log_event(packet_id, "created")
+        CALL log_event(packet_id, {"event": "created", "capability_flags": headers.capability_flags})
         RETURN packet_data
 
 CLASS Packet

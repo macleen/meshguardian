@@ -54,10 +54,16 @@ FUNCTION derive_key(input, salt, iterations, key_length, kdf_type)
     END TRY
     RETURN derived_key
 
-/* Function: generate_salt(key_purpose) */
+/* Function: generate_salt */
 FUNCTION generate_salt(key_purpose)
-    // Generate a cryptographically secure salt with minimum length
-    salt = RANDOM_BYTES(16) + UTF8_ENCODE(key_purpose)
+    // Generate a cryptographically secure salt with context-specific purpose
+    IF key_purpose IN ["ml_protocol_selection", "ml_failure_prediction"]
+        // Add ML-specific identifier for secure model operations
+        context = "ml_" + key_purpose
+    ELSE
+        context = key_purpose
+    END IF
+    salt = RANDOM_BYTES(16) + UTF8_ENCODE(context)
     salted_hash = HASH(salt)  // Prevent length leaks
     RETURN salted_hash
 

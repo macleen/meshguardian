@@ -37,6 +37,7 @@ It provides mechanisms to revoke compromised credentials, regenerate fresh keys,
 ```pseudocode
 
 /* Function: revoke_node_credentials */
+/* Function: revoke_node_credentials */
 FUNCTION revoke_node_credentials(node_id)
     TRY
         DELETE_KEYS(node_id)
@@ -47,6 +48,7 @@ FUNCTION revoke_node_credentials(node_id)
         RAISE RevocationError("Revocation failed")
     END TRY
 
+/* Function: regenerate_system_keys */
 FUNCTION regenerate_system_keys(scope)
     new_keys = GENERATE_NEW_KEYS(scope)
     CALL secure_broadcast(new_keys)
@@ -54,6 +56,7 @@ FUNCTION regenerate_system_keys(scope)
     DEPRECATE_KEYS(previous_gen)
     LOG("New keys issued for scope: " + scope)
 
+/* Function: broadcast_revocation */
 FUNCTION broadcast_revocation(node_id)
     message = CREATE_REVOCATION_NOTICE(node_id)
     BROADCAST_TO_NETWORK(message)
@@ -63,21 +66,45 @@ FUNCTION broadcast_revocation(node_id)
     END IF
     LOG("Revocation notice sent for node: " + node_id)
 
+/* Function: audit_breach */
+FUNCTION audit_breach(node_id, timeframe, packet)
+    logs = RETRIEVE_AUDIT_LOGS(node_id, timeframe)
+    breach_report = ANALYZE_LOGS(logs)
+    IF packet.capability_flags BIT 13 OR packet.capability_flags BIT 14
+        ml_logs = FILTER_LOGS(logs, ["ProtocolSelection", "FailurePrediction"])
+        APPEND breach_report, ml_logs
+    END IF
+    LOG("Breach audit completed for node: " + node_id)
+    RETURN breach_report
+
+/* Function: quarantine_node */
+FUNCTION quarantine_node(node_id, packet)
+    IF packet.capability_flags BIT 14
+        failure_predicted = CALL predict_failure_ml(node_id.battery, node_id.uptime, node_id.rssi_trend)
+        IF failure_predicted
+            MOVE_TO_QUARANTINE_ZONE(node_id)
+            RESTRICT_TRAFFIC(node_id)
+            FLAG_FOR_MONITORING(node_id)
+            LOG("Node quarantined due to ML-predicted failure: " + node_id)
+            RETURN
+        END IF
+    END IF
+    MOVE_TO_QUARANTINE_ZONE(node_id)
+    RESTRICT_TRAFFIC(node_id)
+    FLAG_FOR_MONITORING(node_id)
+    LOG("Node quarantined: " + node_id)
+
+/* Function: check_compromise_signatures */
 FUNCTION check_compromise_signatures()
     IF detect_duplicate_nonces() OR verify_failed_attempts > THRESHOLD THEN
         CALL revoke_node_credentials(suspicious_node_id)
     END IF
 
+/* Function: enforce_re_authentication */
 FUNCTION enforce_re_authentication(node_id)
     IF NOT RE_AUTHENTICATE(node_id) THEN
         CALL quarantine_node(node_id)
     END IF
-
-FUNCTION quarantine_node(node_id)
-    MOVE_TO_QUARANTINE_ZONE(node_id)
-    RESTRICT_TRAFFIC(node_id)
-    FLAG_FOR_MONITORING(node_id)
-    LOG("Node quarantined: " + node_id)
 ```
 
 ## Notes:

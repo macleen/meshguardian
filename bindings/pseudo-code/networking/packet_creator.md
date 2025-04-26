@@ -28,14 +28,28 @@ CLASS PacketCreator
     METHOD create(source, dest, data, profile="default")
         packet_id = GENERATE_UNIQUE_ID()
         timestamp = GET_CURRENT_TIMESTAMP()
+        // Initialize capability flags based on node configuration
+        capability_flags = CALL get_capability_flags()
+        IF node_supports_ml_protocol_selection()
+            SET capability_flags BIT 13 TO 1
+        ELSE
+            SET capability_flags BIT 13 TO 0
+        END IF
+        IF node_supports_ml_failure_prediction()
+            SET capability_flags BIT 14 TO 1
+        ELSE
+            SET capability_flags BIT 14 TO 0
+        END IF
         packet = STRUCTURE {
             "id": packet_id,
             "source": source,
             "dest": dest,
             "data": data,
             "profile": profile,
-            "timestamp": timestamp
+            "timestamp": timestamp,
+            "capability_flags": capability_flags
         }
+        CALL log_event("PacketCreated", {"id": packet_id, "capability_flags": capability_flags})
         RETURN packet
 
 ```  

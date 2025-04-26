@@ -26,7 +26,6 @@ The Hardware Configuration module is responsible for managing the settings and c
 ## Pseudocode
 ```pseudo-code
 
-// Pseudo-code Implementation
 FUNCTION load_config(device_id)
     config = RETRIEVE_CONFIG_FROM_STORAGE(device_id)
     IF config IS NULL
@@ -37,10 +36,28 @@ FUNCTION save_config(device_id, config)
     // Validate the configuration before saving
     IF NOT is_valid_config(config)
         RAISE InvalidConfigError("Invalid configuration for device " + device_id)
+    // Ensure ML-related settings are included
+    IF NOT "ml_protocol_selection" IN config
+        config.ml_protocol_selection = FALSE
+    END IF
+    IF NOT "ml_failure_prediction" IN config
+        config.ml_failure_prediction = FALSE
+    END IF
     STORE_CONFIG_IN_STORAGE(device_id, config)
 
 FUNCTION apply_config(device_id)
     config = CALL load_config(device_id)
+    // Apply ML-related settings
+    IF config.ml_protocol_selection
+        ENABLE_ML_PROTOCOL_SELECTION()
+    ELSE
+        DISABLE_ML_PROTOCOL_SELECTION()
+    END IF
+    IF config.ml_failure_prediction
+        ENABLE_ML_FAILURE_PREDICTION()
+    ELSE
+        DISABLE_ML_FAILURE_PREDICTION()
+    END IF
     APPLY_HARDWARE_SETTINGS(config)
     // Log the successful application
     LOG("Configuration applied to device " + device_id)
@@ -49,6 +66,9 @@ FUNCTION get_default_config(device_type)
     default_config = RETRIEVE_DEFAULT_CONFIG(device_type)
     IF default_config IS NULL
         RAISE DefaultConfigNotFoundError("No default configuration for device type " + device_type)
+    // Set default ML settings
+    default_config.ml_protocol_selection = FALSE
+    default_config.ml_failure_prediction = FALSE
     RETURN default_config
 
 FUNCTION reset_to_defaults(device_id)

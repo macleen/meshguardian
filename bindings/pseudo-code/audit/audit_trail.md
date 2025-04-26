@@ -30,6 +30,15 @@ FUNCTION log_event(event_type, details)
         "event_type": event_type,
         "details": details
     }
+    // Handle ML-related events
+    IF event_type = "ProtocolSelection" THEN
+        log_entry.ml_enabled = details.ml_enabled  // True if Bit 13 = 1
+        log_entry.protocol = details.protocol      // e.g., "Bluetooth", "LoRa"
+    END IF
+    IF event_type = "FailurePrediction" THEN
+        log_entry.ml_enabled = details.ml_enabled  // True if Bit 14 = 1
+        log_entry.prediction = details.prediction  // True/False for failure
+    END IF
     // Store the log entry
     STORE_LOG_ENTRY(log_entry)
 

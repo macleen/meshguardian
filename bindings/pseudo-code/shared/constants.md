@@ -25,6 +25,7 @@ The Constants module provides a centralized location for defining and accessing 
 ## Pseudocode
 The constants are defined as immutable values that can be accessed throughout the system. They are grouped here for clarity and ease of maintenance.
 ```pseudocode
+
 // Define the maximum packet size in bytes
 CONSTANT MAX_PACKET_SIZE = 1024
 
@@ -36,6 +37,13 @@ CONSTANT ENCRYPTION_ALGORITHM = "AES-256"
 
 // Define the default logging level
 CONSTANT LOG_LEVEL = "INFO"
+
+// Define ML-related thresholds for static protocol selection
+CONSTANT ML_PROTOCOL_RSSI_THRESHOLD = -90  // dBm for Bluetooth vs. LoRa
+CONSTANT ML_PROTOCOL_DEFAULT = "LoRa"
+
+// Define ML-related thresholds for static failure prediction
+CONSTANT ML_FAILURE_BATTERY_THRESHOLD = 10  // Percent for node failure
 
 ```
 

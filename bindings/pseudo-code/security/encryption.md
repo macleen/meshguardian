@@ -29,18 +29,43 @@ This module is referenced in the following use cases:
 The core logic of the module is outlined below in pseudocode:
 
 ```pseudocode
-FUNCTION encrypt_data(data, master_key, context)
+FUNCTION encrypt_data(data, master_key, context, packet)
+    IF packet.headers.capability_flags BIT 13
+        // ML-driven protocol selection
+        protocol = CALL select_protocol_ml(context.network_metrics)
+    ELSE
+        // Static protocol selection
+        protocol = CALL select_protocol_static(context.network_metrics)
+    END IF
     session_key = derive_key(master_key, context)
     nonce = generate_nonce()
-    encrypted_data, tag = AES_GCM_ENCRYPT(session_key, nonce, data)
+    IF protocol == "Bluetooth"
+        encrypted_data, tag = AES_GCM_ENCRYPT(session_key, nonce, data)
+    ELSE IF protocol == "LoRa"
+        encrypted_data, tag = KYBER_ENCRYPT(session_key, nonce, data)
+    ELSE
+        encrypted_data, tag = AES_GCM_ENCRYPT(session_key, nonce, data)  // Default
+    END IF
     RETURN nonce + encrypted_data + tag
 
-FUNCTION decrypt_data(encrypted_data, master_key, context)
+FUNCTION decrypt_data(encrypted_data, master_key, context, packet)
+    IF packet.headers.capability_flags BIT 13
+        protocol = CALL select_protocol_ml(context.network_metrics)
+    ELSE
+        protocol = CALL select_protocol_static(context.network_metrics)
+    END IF
     session_key = derive_key(master_key, context)
     nonce = EXTRACT_NONCE(encrypted_data)
     ciphertext = EXTRACT_CIPHERTEXT(encrypted_data)
     tag = EXTRACT_TAG(encrypted_data)
-    RETURN AES_GCM_DECRYPT(session_key, nonce, ciphertext, tag)
+    IF protocol == "Bluetooth"
+        data = AES_GCM_DECRYPT(session_key, nonce, ciphertext, tag)
+    ELSE IF protocol == "LoRa"
+        data = KYBER_DECRYPT(session_key, nonce, ciphertext, tag)
+    ELSE
+        data = AES_GCM_DECRYPT(session_key, nonce, ciphertext, tag)  // Default
+    END IF
+    RETURN data
 
 FUNCTION generate_key()
     RETURN CALL key_management.generate_key()

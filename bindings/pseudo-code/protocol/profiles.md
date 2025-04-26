@@ -33,15 +33,29 @@ FUNCTION add_profile(profile_name, settings)
     IF profile_name IN profiles
         RAISE ProfileAlreadyExistsError("Profile '" + profile_name + "' already exists")
     ELSE
+        // Ensure ML settings are included
+        IF NOT "ml_protocol_selection" IN settings
+            settings.ml_protocol_selection = FALSE
+        END IF
+        IF NOT "ml_failure_prediction" IN settings
+            settings.ml_failure_prediction = FALSE
+        END IF
         SET profiles[profile_name] TO settings
-        CALL log_event("Profile added: " + profile_name)
+        CALL log_event("Profile added: " + profile_name, {"settings": settings})
 
 FUNCTION update_profile(profile_name, new_settings)
     IF profile_name NOT IN profiles
         RAISE ProfileNotFoundError("Profile '" + profile_name + "' does not exist")
     ELSE
+        // Ensure ML settings are included
+        IF NOT "ml_protocol_selection" IN new_settings
+            new_settings.ml_protocol_selection = profiles[profile_name].ml_protocol_selection
+        END IF
+        IF NOT "ml_failure_prediction" IN new_settings
+            new_settings.ml_failure_prediction = profiles[profile_name].ml_failure_prediction
+        END IF
         SET profiles[profile_name] TO new_settings
-        CALL log_event("Profile updated: " + profile_name)
+        CALL log_event("Profile updated: " + profile_name, {"settings": new_settings})
 
 FUNCTION remove_profile(profile_name)
     IF profile_name NOT IN profiles

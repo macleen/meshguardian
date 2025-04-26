@@ -63,6 +63,17 @@ FUNCTION get_node_status(node_id)
     ELSE
         // Check node health (e.g., ping, resource usage)
         IF CALL is_node_active(node)
+            // Check ML-driven failure prediction if enabled
+            IF node.capability_flags BIT 14
+                failure_predicted = CALL predict_failure_ml(node.battery, node.uptime, node.rssi_trend)
+                IF failure_predicted
+                    RETURN "degraded"
+                END IF
+            ELSE
+                IF node.battery < 10  // Heuristic rule
+                    RETURN "degraded"
+                END IF
+            END IF
             RETURN "active"
         ELSE IF CALL is_node_degraded(node)
             RETURN "degraded"
@@ -71,7 +82,12 @@ FUNCTION get_node_status(node_id)
 
 FUNCTION alert_on_failure(node_id)
     // Trigger an alert when a node failure is detected
-    CALL log_event("Node failure detected: " + node_id)
+    node = CALL find_node_by_id(node_id)
+    details = {
+        "ml_enabled": node.capability_flags BIT 14,
+        "prediction": node.status == "degraded"
+    }
+    CALL log_event("FailurePrediction", details)
     CALL notify_admins("Node " + node_id + " has failed")
     // Additional actions, e.g., reroute traffic, initiate recovery
 ```

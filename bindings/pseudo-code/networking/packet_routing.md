@@ -56,15 +56,32 @@ The Routing module calculates the optimal path for data packets from a source no
 ## Pseudocode
 ```pseudo-code
 // Actual Pseudo-code Implementation
-FUNCTION select_route(source, destination)
+FUNCTION select_route(source, destination, packet)
     IF source == destination
         RETURN "Local delivery"
     ELSE
-        route = CALL find_shortest_path(source, destination)
-        IF route IS NOT NULL
-            RETURN route
+        IF packet.headers.capability_flags BIT 13
+            // ML-driven routing
+            route = CALL find_ml_route(source, destination, packet.network_metrics)
         ELSE
-            RAISE RoutingError("No route found")
+            // Static routing (shortest path)
+            route = CALL find_shortest_path(source, destination)
+        END IF
+        IF route IS NOT NULL
+            // Filter out nodes predicted to fail if Bit 14 is enabled
+            IF packet.headers.capability_flags BIT 14
+                filtered_route = []
+                FOR each node IN route
+                    IF NOT CALL predict_failure_ml(node.battery, node.uptime, node.rssi_trend)
+                        APPEND filtered_route, node
+                END IF
+                IF filtered_route IS NOT EMPTY
+                    RETURN filtered_route
+                END IF
+            ELSE
+                RETURN route
+            END IF
+        RAISE RoutingError("No route found")
 
 FUNCTION find_shortest_path(source, destination)
     SET distances TO dictionary with all nodes set to infinity
@@ -94,6 +111,14 @@ FUNCTION find_shortest_path(source, destination)
         RETURN path
     ELSE
         RETURN NULL
+
+FUNCTION find_ml_route(source, destination, network_metrics)
+    // Placeholder for ML-driven routing using TinyML
+    model = LOAD_TINYML_MODEL("routing")
+    input_data = [network_metrics.latency, network_metrics.bandwidth, network_metrics.node_health]
+    output = model.predict(input_data)
+    route = PARSE_ROUTE(output)
+    RETURN route
 
 FUNCTION update_route_table(new_routes)
     // Logic to update routing table with new_routes

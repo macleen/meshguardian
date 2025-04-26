@@ -28,6 +28,14 @@ FUNCTION validate_message(message)
     // Check if the message is well-formed
     IF NOT is_well_formed(message)
         RETURN False
+    // Validate Feature Flags
+    feature_flags = message.feature_flags
+    IF feature_flags BIT 13 AND feature_flags BIT 24 THEN
+        RETURN False  // ML Protocol Selection (Bit 13) not allowed in Low-Energy Mode (Bit 24)
+    END IF
+    IF feature_flags BIT 14 AND feature_flags BIT 24 THEN
+        RETURN False  // ML Failure Prediction (Bit 14) not allowed in Low-Energy Mode (Bit 24)
+    END IF
     // Retrieve sender's public key and verify signature
     public_key = GET_SENDER_PUBLIC_KEY(message.sender)
     IF NOT verify_signature(message.signature, message.content, public_key)

@@ -46,7 +46,6 @@ Queues messages for offline nodes during key transitions.
 ## Pseudo-code
 ```pseudocode
 /* Function: generate_ephemeral_keypair */
-/* Function: generate_ephemeral_keypair */
 FUNCTION generate_ephemeral_keypair()
     private_key = X25519_GENERATE_PRIVATE_KEY()
     public_key = X25519_COMPUTE_PUBLIC_KEY(private_key)
@@ -58,9 +57,15 @@ FUNCTION derive_shared_secret(own_private_key, peer_public_key)
     RETURN shared_secret
 
 /* Function: derive_session_key */
-FUNCTION derive_session_key(shared_secret, context_info)
-    session_key = HKDF(shared_secret, context_info || "meshguardian_session_" || session_id)
+FUNCTION derive_session_key(shared_secret, context_info, packet)
+    IF packet.capability_flags BIT 13
+        protocol = CALL select_protocol_ml(context_info.network_metrics)
+    ELSE
+        protocol = CALL select_protocol_static(context_info.network_metrics)
+    END IF
+    session_key = HKDF(shared_secret, context_info || "meshguardian_session_" || session_id || protocol)
     STORE_SESSION_KEY(context_info.session_id, session_key)
+    LOG("Session key derived for session: " + session_id + " with protocol: " + protocol)
     RETURN session_key
 
 /* Function: expire_session_key */
@@ -71,9 +76,16 @@ FUNCTION expire_session_key(session_id)
     LOG("Session key securely erased for ID: " + session_id)
 
 /* Function: check_rekeying_conditions */
-FUNCTION check_rekeying_conditions(session)
+FUNCTION check_rekeying_conditions(session, packet)
     IF session.duration > MAX_SESSION_TIME OR session.bytes_encrypted > REKEY_BYTES_LIMIT THEN
         CALL initiate_rekeying(session)
+    END IF
+    IF packet.capability_flags BIT 14
+        failure_predicted = CALL predict_failure_ml(session.node.battery, session.node.uptime, session.node.rssi_trend)
+        IF failure_predicted
+            CALL initiate_rekeying(session)
+            LOG("Rekeying triggered due to ML-predicted failure for session: " + session.id)
+        END IF
     END IF
 
 /* Function: rotate_group_key */

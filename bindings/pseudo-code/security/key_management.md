@@ -40,10 +40,14 @@ FUNCTION generate_key(parameters)
     IF NOT VALIDATE_KEY_PARAMETERS(parameters)
         RAISE WeakKeyParametersError("Invalid key parameters")
     END IF
+    IF parameters.purpose IN ["ml_protocol_selection", "ml_failure_prediction"]
+        // Ensure ML-specific key parameters
+        parameters.ml_enabled = TRUE
+    END IF
     key = CRYPTO_GENERATE_KEY(parameters)
     key_id = GENERATE_UNIQUE_ID()
     CALL store_key(key_id, key)
-    LOG("Key generated with ID: " + key_id + " by " + CALLER)
+    LOG("Key generated with ID: " + key_id + " for purpose: " + parameters.purpose)
     RETURN key_id
 
 /* Function: rotate_key */
@@ -91,14 +95,6 @@ FUNCTION retrieve_key(key_id)
     FINALLY
         SECURE_WIPE(encrypted_key)
     END TRY
-
-/* Function: delete_key */
-FUNCTION delete_key(key_id)
-    IF HAS_HSM THEN
-        HSM_DELETE_KEY(key_id)
-    ELSE
-        REMOVE_FROM_VAULT(key_id)
-    END IF
 ```
 
 ---

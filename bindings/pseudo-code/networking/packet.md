@@ -24,7 +24,7 @@ The `Packet` class represents a data packet in the networking system, encapsulat
 ```pseudocode
 CLASS Packet
     """
-    Represents a data packet with a unique ID, source, destination, data, and profile.
+    Represents a data packet with a unique ID, source, destination, data, profile, and capability flags.
     Single Responsibility: Manages packet structure and basic operations.
     """
     // Attributes
@@ -33,10 +33,11 @@ CLASS Packet
     dest: String            // Receiver node ID
     data: Bytes             // Payload data
     profile: String         // Communication profile (e.g., "default")
+    capability_flags: Integer  // 32-bit capability flags
 
     METHOD __init__(source, dest, data, profile="default")
         """
-        Initializes a Packet with source, destination, data, and an optional profile.
+        Initializes a Packet with source, destination, data, profile, and capability flags.
         Args:
             source: Sender node ID (string)
             dest: Receiver node ID (string)
@@ -46,30 +47,40 @@ CLASS Packet
             packet = NEW Packet("Node_A", "Node_B", b"hello", "default")
         """
         // Generate a unique identifier for the packet
-        self.id = CALL generate_uuid()  // e.g., "123e4567-e89b-12d3-a456-426614174000"
+        self.id = CALL generate_uuid()
 
         // Set attributes
         self.source = source
         self.dest = dest
         self.data = data
         self.profile = profile
+        // Initialize capability flags
+        self.capability_flags = CALL get_capability_flags()
+        IF node_supports_ml_protocol_selection()
+            SET self.capability_flags BIT 13 TO 1
+        ELSE
+            SET self.capability_flags BIT 13 TO 0
+        END IF
+        IF node_supports_ml_failure_prediction()
+            SET self.capability_flags BIT 14 TO 1
+        ELSE
+            SET self.capability_flags BIT 14 TO 0
+        END IF
+        CALL log_event("PacketInitialized", {"id": self.id, "capability_flags": self.capability_flags})
 
     METHOD to_dict()
         """
         Converts the packet attributes into a dictionary.
         Returns:
-            Dictionary containing id, source, dest, data, and profile
-        Example:
-            packet = NEW Packet("Node_A", "Node_B", b"hello")
-            dict_data = CALL packet.to_dict()
-            // dict_data contains {"id": "123e4567...", "source": "Node_A", ...}
+            Dictionary containing id, source, dest, data, profile, and capability_flags
         """
         RETURN {
             "id": self.id,
             "source": self.source,
             "dest": self.dest,
             "data": self.data,
-            "profile": self.profile
+            "profile": self.profile,
+            "capability_flags": self.capability_flags
         }
 
     CLASS METHOD from_dict(packet_dict)
@@ -79,11 +90,10 @@ CLASS Packet
             packet_dict: Dictionary with packet attributes
         Returns:
             Packet instance
-        Example:
-            packet = Packet.from_dict({"id": "123e4567...", "source": "Node_A", ...})
         """
         packet = NEW Packet(packet_dict["source"], packet_dict["dest"], packet_dict["data"], packet_dict["profile"])
         packet.id = packet_dict["id"]
+        packet.capability_flags = packet_dict["capability_flags"]
         RETURN packet
 ```  
 

@@ -69,7 +69,6 @@ The Validation module is designed to ensure that data packets conform to specifi
 ## Pseudocode
 
 ```pseudo-code
-// Pseudo-code Implementation
 FUNCTION validate_packet(packet)
     // Check if packet has all required fields
     IF NOT has_required_fields(packet)
@@ -85,12 +84,21 @@ FUNCTION validate_packet(packet)
     IF size_of(packet.data) > MAX_PACKET_SIZE
         RAISE ValidationError("Data exceeds maximum size")
     
+    // Validate capability flags
+    feature_flags = packet.headers.capability_flags
+    IF feature_flags BIT 13 AND feature_flags BIT 24
+        RAISE ValidationError("ML Protocol Selection (Bit 13) not allowed in Low-Energy Mode (Bit 24)")
+    END IF
+    IF feature_flags BIT 14 AND feature_flags BIT 24
+        RAISE ValidationError("ML Failure Prediction (Bit 14) not allowed in Low-Energy Mode (Bit 24)")
+    END IF
+    
     // Additional validation checks can be added as needed
     RETURN True
 
 FUNCTION has_required_fields(packet)
     // List of required fields in a valid packet
-    required_fields = ["source", "destination", "data"]
+    required_fields = ["source", "destination", "data", "headers"]
     FOR each field IN required_fields
         IF field NOT IN packet
             RETURN False

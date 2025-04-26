@@ -49,15 +49,24 @@ FUNCTION initialize_pod()
     RETURN success_status
 
 // Function: anonymize_data
-FUNCTION anonymize_data(data)
+FUNCTION anonymize_data(data, packet)
     IF data contains PII THEN
         FOR each field in data
             IF field is sensitive THEN
-                field = hash(field + UNIQUE_SALT) + LAPLACE_NOISE(epsilon=0.1)
+                IF packet.headers.capability_flags BIT 13
+                    // ML-driven redaction
+                    model = LOAD_TINYML_MODEL("redaction")
+                    input_data = [field, context]
+                    anonymized_field = model.predict(input_data)
+                ELSE
+                    // Static redaction
+                    anonymized_field = hash(field + UNIQUE_SALT) + LAPLACE_NOISE(epsilon=0.1)
+                END IF
+                field = anonymized_field
             END IF
         END FOR
     END IF
-    logging_interface.log("Data anonymized")
+    logging_interface.log("Data anonymized", {"ml_enabled": packet.headers.capability_flags BIT 13})
     RETURN anonymized_data
 
 // Function: restrict_access

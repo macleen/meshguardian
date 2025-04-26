@@ -31,56 +31,41 @@ The Hardware Interface module provides a standardized abstraction layer for inte
 ```pseudo-code
 The following pseudo-code outlines the core logic for interfacing with hardware components in the protocol process.
 
-// Function: init_hardware
 FUNCTION init_hardware(device_id)
-    // Verify the device exists and is accessible
-    IF NOT device_exists(device_id) THEN
+    IF NOT device_exists(device_id)
         RAISE DeviceNotFoundError("Device " + device_id + " not found")
-    END IF
-    // Load and apply hardware configuration
     CALL hardware_config.apply_config(device_id)
-    // Initialize device drivers
     driver = LOAD_DRIVER(device_id)
     INITIALIZE_DRIVER(driver)
     RETURN success_status
 
-// Function: send_packet
 FUNCTION send_packet(device_id, packet)
-    // Ensure device is initialized
-    IF NOT is_device_ready(device_id) THEN
+    IF NOT is_device_ready(device_id)
         RAISE DeviceNotReadyError("Device " + device_id + " is not ready")
+    // Select protocol based on capability flags
+    IF packet.headers.capability_flags BIT 13
+        protocol = CALL select_protocol_ml(packet.network_metrics)
+    ELSE
+        protocol = CALL select_protocol_static(packet.network_metrics)
     END IF
-    // Convert packet to signal using device driver
+    driver = LOAD_DRIVER(device_id, protocol)
     signal = CONVERT_TO_SIGNAL(packet)
-    // Transmit the signal via hardware
-    driver = LOAD_DRIVER(device_id)
     TRANSMIT_SIGNAL(driver, signal)
-    // Check for transmission errors
-    IF NOT transmission_successful() THEN
+    IF NOT transmission_successful()
         RAISE TransmissionError("Failed to send packet via device " + device_id)
-    END IF
     RETURN success_status
 
-// Function: receive_packet
 FUNCTION receive_packet(device_id)
-    // Ensure device is initialized
-    IF NOT is_device_ready(device_id) THEN
+    IF NOT is_device_ready(device_id)
         RAISE DeviceNotReadyError("Device " + device_id + " is not ready")
-    END IF
-    // Receive signal from hardware
     driver = LOAD_DRIVER(device_id)
     signal = RECEIVE_SIGNAL(driver)
-    // Convert signal back to packet
     packet = CONVERT_FROM_SIGNAL(signal)
-    // Validate packet integrity
-    IF NOT is_valid_packet(packet) THEN
+    IF NOT is_valid_packet(packet)
         RAISE PacketCorruptionError("Received packet is corrupted")
-    END IF
     RETURN packet
 
-// Function: get_hardware_status
 FUNCTION get_hardware_status(device_id)
-    // Retrieve hardware status (e.g., power, connectivity, errors)
     driver = LOAD_DRIVER(device_id)
     status = CHECK_HARDWARE_STATUS(driver)
     RETURN status

@@ -24,11 +24,19 @@ The PoS Validation module is designed to validate blocks, transactions, and vali
 
 ## Pseudocode
 ```pseudo-code
-// Function to validate a proposed block
+/// Function to validate a proposed block
 FUNCTION validate_block(block)
     // Check block structure and header
     IF NOT is_valid_block_structure(block)
         RETURN False
+    // Validate Feature Flags
+    feature_flags = block.feature_flags
+    IF feature_flags BIT 13 AND feature_flags BIT 24 THEN
+        RETURN False  // ML Protocol Selection (Bit 13) not allowed in Low-Energy Mode (Bit 24)
+    END IF
+    IF feature_flags BIT 14 AND feature_flags BIT 24 THEN
+        RETURN False  // ML Failure Prediction (Bit 14) not allowed in Low-Energy Mode (Bit 24)
+    END IF
     // Verify block’s proposer has sufficient stake
     proposer = block.proposer
     IF NOT check_validator_stake(proposer, block)

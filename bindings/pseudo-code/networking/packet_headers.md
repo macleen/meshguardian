@@ -25,12 +25,13 @@ CLASS PacketHeaders
     /*
     Encapsulates packet header attributes for consistency and extensibility.
     Used In: 5.11 (blockchain), 5.12 (telehealth), 5.14 (IoT), 5.15 (aid), 5.16 (chat)
-    Single Responsibility: Defines and validates header metadata (TTL, profile, priority).
+    Single Responsibility: Defines and validates header metadata (TTL, profile, priority, capability_flags).
     */
     // Attributes
     ttl: Integer      // Time-to-live in seconds, e.g., 3600
     profile: String   // Communication profile, e.g., "default", "emergency"
     priority: String  // Priority level, e.g., "normal", "urgent"
+    capability_flags: Integer  // 32-bit capability flags
 
     METHOD __init__(profile)
         /*
@@ -41,17 +42,27 @@ CLASS PacketHeaders
             InvalidProfileError: From /pseudo-code/exceptions/networking_errors.md
         */
         // Validate profile
-        valid_profiles = CALL get_valid_profiles()  // From /pseudo-code/protocol/profiles.md
+        valid_profiles = CALL get_valid_profiles()
         IF profile NOT IN valid_profiles
             RAISE InvalidProfileError("Profile '{profile}' not recognized")
 
         // Set attributes
         self.profile = profile
-        self.ttl = CALL get_ttl(profile)        // e.g., 3600 for default
-        self.priority = CALL get_priority(profile)  // e.g., "urgent"
-
-        // Log creation
-        CALL log_event("Headers_{profile}", "created")  // To /pseudo-code/audit/audit_trail.md
+        self.ttl = CALL get_ttl(profile)
+        self.priority = CALL get_priority(profile)
+        // Initialize capability flags
+        self.capability_flags = CALL get_capability_flags()
+        IF node_supports_ml_protocol_selection()
+            SET self.capability_flags BIT 13 TO 1
+        ELSE
+            SET self.capability_flags BIT 13 TO 0
+        END IF
+        IF node_supports_ml_failure_prediction()
+            SET self.capability_flags BIT 14 TO 1
+        ELSE
+            SET self.capability_flags BIT 14 TO 0
+        END IF
+        CALL log_event("Headers_{profile}", {"profile": profile, "capability_flags": self.capability_flags})
 ```
 
 ---
