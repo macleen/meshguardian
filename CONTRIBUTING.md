@@ -40,6 +40,9 @@ To contribute to MeshGuardian, set up your local environment as follows:
 1. **Fork the Repository**:
    - Navigate to the [MeshGuardian GitHub repository](https://github.com/macleen/meshguardian).
    - Click **Fork** to create a copy under your GitHub account.
+   - Clone your fork: `git clone https://github.com/your-username/meshguardian.git`.
+   - Add the main repository as an upstream remote: `git remote add upstream https://github.com/ macleen/meshguardian.git`.
+   - Keep your fork updated by pulling from upstream: `git pull upstream main`.
 
 2. **Clone Your Fork**:
    ```bash
