@@ -1,76 +1,114 @@
 # Pseudo-code: Packet Headers
 
-## Class: PacketHeaders
+## Purpose
+The PacketHeaders class encapsulates packet header attributes for consistency and extensibility in the MeshGuardian network. It defines and validates metadata such as TTL, profile, priority, capability flags, vector clocks, and consensus mode, supporting ML-driven protocol selection (Bit 13), failure prediction (Bit 14), blockchain audit logging (Bit 15), and Asynchronous Delay-Tolerant Consensus (ADTC) for interplanetary environments.
 
-### Method: __init__(profile)
 
-**Purpose**:  
-Initializes packet headers with metadata such as TTL, profile, and priority based on a specified communication profile.
+## Interfaces
+- init(profile): Initializes headers with profile-based settings.
+- to_dict(): Converts headers to a dictionary.
+- from_dict(header_dict): Creates headers from a dictionary.
 
-**Parameters**:  
-- `profile`: The communication profile (e.g., "default", "emergency").
+## Depends On
+- /pseudo-code/protocol/profiles.md: Validates profiles and retrieves settings.
+- /pseudo-code/audit_trail.md: Logs header initialization events.
+- /pseudo-code/exceptions/networking_errors.md: Defines InvalidProfileError.
+- /pseudo-code/helpers.md: Provides vector clock utilities.
+- /pseudo-code/constants.md: Defines ADTC_CONSENSUS_CODE.
 
-**Raises**:  
-- `InvalidProfileError`: If the provided profile is not recognized.
+## Called By
+- /pseudo-code/packet.md: Initializes headers for packets.
+- /pseudo-code/networking/packet_creation.md: Uses headers during packet creation.
 
-**Example**:  
-```pseudo-code
-headers = NEW PacketHeaders("emergency")
-// headers.ttl is 1800, headers.priority is "urgent"
-```
+## Used In
+- Use Case 5.11: Blockchain Logging: Supports Solana audit trails.
+- Use Case 5.12: Telehealth: Ensures secure patient data packets.
+- Use Case 5.14: Rural IoT: Manages sensor data delivery.
+- Use Case 5.15: Aid Relays: Tracks supply in crisis zones.
+- Use Case 5.16: Emergency Chat: Enables real-time messaging.
+- Use Case 5.1.1: Mars Rover Data Relay: Supports ADTC vote packets.
 
-## Pseudo-code
-```pseudo-code
+## Pseudocode
+```pseudocode
 CLASS PacketHeaders
-    /*
-    Encapsulates packet header attributes for consistency and extensibility.
-    Used In: 5.11 (blockchain), 5.12 (telehealth), 5.14 (IoT), 5.15 (aid), 5.16 (chat)
-    Single Responsibility: Defines and validates header metadata (TTL, profile, priority, capability_flags).
-    */
     // Attributes
-    ttl: Integer      // Time-to-live in seconds, e.g., 3600
-    profile: String   // Communication profile, e.g., "default", "emergency"
-    priority: String  // Priority level, e.g., "normal", "urgent"
+    ttl: Integer      // Time-to-live in seconds
+    profile: String   // Communication profile
+    priority: String  // Priority level
     capability_flags: Integer  // 32-bit capability flags
+    vector_clock: MAP[NodeID, INTEGER]  // Vector clock for ADTC
+    consensus_mode: Integer  // Consensus mode (e.g., ADTC_CONSENSUS_CODE)
 
     METHOD __init__(profile)
-        /*
-        Initializes headers with profile-based settings.
-        Args:
-            profile: String, e.g., "default", "emergency"
-        Raises:
-            InvalidProfileError: From /pseudo-code/exceptions/networking_errors.md
-        */
-        // Validate profile
         valid_profiles = CALL get_valid_profiles()
-        IF profile NOT IN valid_profiles
+        IF profile NOT IN valid_profiles THEN
             RAISE InvalidProfileError("Profile '{profile}' not recognized")
-
-        // Set attributes
+        END IF
         self.profile = profile
         self.ttl = CALL get_ttl(profile)
         self.priority = CALL get_priority(profile)
-        // Initialize capability flags
         self.capability_flags = CALL get_capability_flags()
-        IF node_supports_ml_protocol_selection()
-            SET self.capability_flags BIT 13 TO 1
+        IF CALL node_supports_ml_protocol_selection() THEN
+            SET self.capability_flags BIT_13 TO 1
         ELSE
-            SET self.capability_flags BIT 13 TO 0
+            SET self.capability_flags BIT_13 TO 0
         END IF
-        IF node_supports_ml_failure_prediction()
-            SET self.capability_flags BIT 14 TO 1
+        IF CALL node_supports_ml_failure_prediction() THEN
+            SET self.capability_flags BIT_14 TO 1
         ELSE
-            SET self.capability_flags BIT 14 TO 0
+            SET self.capability_flags BIT_14 TO 0
         END IF
-        CALL log_event("Headers_{profile}", {"profile": profile, "capability_flags": self.capability_flags})
+        IF CALL node_supports_adtc() THEN
+            SET self.capability_flags BIT_28 TO 1
+        ELSE
+            SET self.capability_flags BIT_28 TO 0
+        END IF
+        self.vector_clock = {}
+        IF profile = "interplanetary" THEN
+            self.vector_clock[CURRENT_NODE_ID] = CALL helpers.increment_lamport_clock(0)
+            self.consensus_mode = constants.A DTC_CONSENSUS_CODE
+        ELSE
+            self.consensus_mode = 0
+        END IF
+        CALL log_event("Headers_{profile}", {
+            "profile": profile,
+            "capability_flags": self.capability_flags,
+            "vector_clock": self.vector_clock
+        }, self.capability_flags)
+    END METHOD
+
+    METHOD to_dict()
+        RETURN {
+            "ttl": self.ttl,
+            "profile": self.profile,
+            "priority": self.priority,
+            "capability_flags": self.capability_flags,
+            "vector_clock": self.vector_clock,
+            "consensus_mode": self.consensus_mode
+        }
+    END METHOD
+
+    CLASS METHOD from_dict(header_dict)
+        headers = NEW PacketHeaders(header_dict["profile"])
+        headers.ttl = header_dict["ttl"]
+        headers.priority = header_dict["priority"]
+        headers.capability_flags = header_dict["capability_flags"]
+        headers.vector_clock = header_dict["vector_clock"]
+        headers.consensus_mode = header_dict["consensus_mode"]
+        RETURN headers
+    END METHOD
+END CLASS
 ```
 
 ---
 
 ## Notes
-- Role: The PacketHeaders class ensures consistent and validated packet metadata across various communication scenarios.
-- Assumptions: The pseudo-code assumes the existence of helper functions (get_valid_profiles, get_ttl, get_priority) that must be implemented elsewhere to provide profile-specific values.
-- Logging: The log_event function is intended for auditing and should be defined in a separate module, such as /pseudo-code/audit/audit_trail.md.
-- Implementation: In languages requiring explicit attribute assignment, self.attribute = value syntax is used instead of SET. Adapt as needed for other languages.
-- Suggestions: Consider adding methods to modify header attributes after initialization if dynamic updates are required.
-- Extensibility: Additional header fields can be incorporated as the system’s needs evolve.
+- Role: Ensures consistent packet metadata, including vector clocks and consensus mode for ADTC.
+- ADTC Support: Initializes vector clock and sets ADTC_CONSENSUS_CODE for interplanetary profiles.
+- Capability Flags: Supports ML (Bits 13, 14) and ADTC (Bit 28). Bits 28–31 reserved for interplanetary features.
+- Logging: Logs header initialization, using Tier 1 for ADTC headers if Bit 15 = 1.
+
+## TODO
+- Add validation for header fields.
+- Optimize vector clock storage for low-memory devices.
+- Support dynamic updates to consensus mode.

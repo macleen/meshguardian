@@ -1,7 +1,7 @@
 # Node Monitor Module
 
 ## Purpose
-The Node Monitor module continuously oversees the health and status of nodes in the network. It detects issues like node failures or performance degradation and triggers alerts for timely intervention. This is crucial for maintaining network reliability, especially in dynamic environments like crisis zones or IoT systems.
+The Node Monitor module continuously oversees the health and status of nodes in the MeshGuardian network, detecting issues like failures or degradation and triggering alerts. It supports interplanetary environments with Asynchronous Delay-Tolerant Consensus (ADTC) by handling delayed responses (15-30 minute RTTs), ensuring reliability in dynamic scenarios like crisis zones, IoT systems, or Mars rover networks.
 
 ## Interfaces
 - **start_monitoring()**  
@@ -26,9 +26,10 @@ The Node Monitor module continuously oversees the health and status of nodes in 
   - Behavior: Logs the event and notifies administrators; additional recovery actions can be added.  
 
 ## Depends On
-- **Node Registry**: Provides the list of nodes to monitor (e.g., network_nodes).  
-- **Health Check Functions**: Includes is_node_active and is_node_degraded to assess node health.  
-- **Logging and Notification Utilities**: Supports log_event and notify_admins for alerts.  
+- /pseudo-code/networking/node_registry.md: Provides the list of nodes to monitor.
+- /pseudo-code/networking/health_checks.md: Includes is_node_active and is_node_degraded for health assessment.
+- /pseudo-code/audit_trail.md: Logs monitoring events and alerts.
+- /pseudo-code/constants.md: Uses ADTC_TIMEOUT for interplanetary checks.
 
 ## Called By
 - **Network Management System**: Invokes start_monitoring to begin the monitoring process.  
@@ -39,65 +40,75 @@ The Node Monitor module continuously oversees the health and status of nodes in 
 - **Automated Recovery Systems**: Uses alerts to initiate failover or recovery procedures.  
 
 ## Used In
-- **Crisis Response Networks**: Ensures node reliability in critical, high-stakes environments.  
-- **IoT Systems**: Monitors sensor nodes to maintain consistent data flow.  
+- Use Case 5.15: Aid Relays: Ensures node reliability in crisis zones.
+- Use Case 5.16: Emergency Chat: Maintains consistent messaging.
+- Use Case 5.1.1: Mars Rover Data Relay: Monitors nodes in high-latency networks. 
 
 ## Pseudocode
 ```pseudo-code
 
-// Pseudo-code Implementation
+// Function to start monitoring
 FUNCTION start_monitoring()
-    // Begin continuous monitoring of all nodes
     WHILE True
         FOR each node IN network_nodes
             status = CALL get_node_status(node.id)
-            IF status == "inactive" OR status == "degraded"
+            IF status == "inactive" OR status == "degraded" THEN
                 CALL alert_on_failure(node.id)
-        WAIT_FOR_INTERVAL(monitor_interval)  // e.g., every 5 seconds
+        WAIT_FOR_INTERVAL(monitor_interval)  // e.g., 5 seconds
+    END FUNCTION
 
+// Function to get node status
 FUNCTION get_node_status(node_id)
-    // Retrieve the current status of the specified node
     node = CALL find_node_by_id(node_id)
-    IF node IS NULL
+    IF node IS NULL THEN
         RETURN "unknown"
-    ELSE
-        // Check node health (e.g., ping, resource usage)
-        IF CALL is_node_active(node)
-            // Check ML-driven failure prediction if enabled
-            IF node.capability_flags BIT 14
-                failure_predicted = CALL predict_failure_ml(node.battery, node.uptime, node.rssi_trend)
-                IF failure_predicted
-                    RETURN "degraded"
-                END IF
-            ELSE
-                IF node.battery < 10  // Heuristic rule
-                    RETURN "degraded"
-                END IF
+    END IF
+    timeout = node.profile = "interplanetary" ? constants.A DTC_TIMEOUT : DEFAULT_TIMEOUT
+    IF CALL is_node_active(node, timeout) THEN
+        IF node.capability_flags HAS BIT_14 THEN
+            failure_predicted = CALL predict_failure_ml(node.battery, node.uptime, node.rssi_trend)
+            IF failure_predicted THEN
+                RETURN "degraded"
             END IF
-            RETURN "active"
-        ELSE IF CALL is_node_degraded(node)
-            RETURN "degraded"
         ELSE
-            RETURN "inactive"
+            IF node.battery < constants.ML_FAILURE_BATTERY_THRESHOLD THEN
+                RETURN "degraded"
+            END IF
+        END IF
+        RETURN "active"
+    ELSE IF CALL is_node_degraded(node, timeout) THEN
+        RETURN "degraded"
+    ELSE
+        RETURN "inactive"
+    END IF
+END FUNCTION
 
+// Function to alert on failure
 FUNCTION alert_on_failure(node_id)
-    // Trigger an alert when a node failure is detected
     node = CALL find_node_by_id(node_id)
     details = {
-        "ml_enabled": node.capability_flags BIT 14,
-        "prediction": node.status == "degraded"
+        "ml_enabled": node.capability_flags HAS BIT_14,
+        "prediction": node.status == "degraded",
+        "profile": node.profile
     }
-    CALL log_event("FailurePrediction", details)
+    IF node.profile = "interplanetary" THEN
+        details.vector_clock = node.vector_clock
+    END IF
+    CALL log_event("FailurePrediction", details, node.capability_flags)
     CALL notify_admins("Node " + node_id + " has failed")
-    // Additional actions, e.g., reroute traffic, initiate recovery
+END FUNCTION
 ```
 
 ---
 
 ## Notes
-- **Monitoring Interval**: The WAIT_FOR_INTERVAL function controls how often nodes are checked (e.g., every 5 seconds). Adjust this based on system needs and performance constraints.  
-- **Real-Time Updates**: For more responsive monitoring, consider event-driven checks instead of periodic polling.  
-- **Scalability**: In large networks, optimize the status check loop to avoid performance bottlenecks.  
-- **Customization**: The health check logic (is_node_active, is_node_degraded) should be tailored to the specific criteria for node health in the system.  
-- **Error Handling**: Ensure that failures in monitoring (e.g., inability to reach a node) are logged and handled gracefully.  
+- Monitoring Interval: Adjustable via monitor_interval (e.g., 5 seconds for terrestrial, longer for interplanetary).
+- ADTC Support: Uses ADTC_TIMEOUT for interplanetary node checks, handling 15-30 minute RTTs.
+- Scalability: Optimizes status checks for large networks, using event-driven checks where possible.
+- Error Handling: Logs failures as Tier 2 events, Tier 1 for critical interplanetary nodes (Bit 15 = 1).
+- Customization: Health check logic (is_node_active, is_node_degraded) tailored to system criteria.
 
+## TODO
+- Implement event-driven checks for responsiveness.
+- Optimize interplanetary monitoring for sparse networks.
+- Add support for node weight metrics (uptime, solar exposure) in alerts.

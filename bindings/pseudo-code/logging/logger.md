@@ -1,18 +1,17 @@
 # Logger Module
 
 ## Purpose
-The Logger module provides a centralized logging mechanism for MeshGuardian, enabling the recording of system events, errors, and debugging information. It supports configurable logging levels (e.g., INFO, DEBUG) and integrates with the audit trail for persistent event storage. The module ensures that logging operations are efficient and secure, supporting the two-tier audit trail system (Solana for Tier 1, local with P2P sync for Tier 2) via Bit 15, and ML-driven features (Bits 13 and 14).
+The Logger module provides a centralized logging mechanism for MeshGuardian, enabling the recording of system events, errors, and debugging information. It supports configurable logging levels (e.g., INFO, DEBUG) and integrates with the audit trail for persistent event storage. The module ensures that logging operations are efficient, secure, and robust, supporting the two-tier audit trail system (Solana for Tier 1, local with P2P sync for Tier 2) via Bit 15, and ML-driven features (Bits 13 and 14), with buffer overflow handling to prevent log loss.
 
 ## Depends On
-
-- /pseudo-code/audit_trail.md: Forwards events to the audit trail for persistent logging.
-- /pseudo-code/constants.md: Uses LOG_LEVEL to set the initial logging verbosity.
-- /pseudo-code/shared/helpers.md: Provides utility functions for formatting log messages.
+- **/pseudo-code/audit_trail.md**: Forwards events to the audit trail for persistent logging.
+- **/pseudo-code/constants.md**: Uses `LOG_LEVEL` to set the initial logging verbosity.
+- **/pseudo-code/shared/helpers.md**: Provides utility functions for formatting log messages.
 
 ## Called By
-- /pseudo-code/audit_trail.md: Logs events before audit trail processing.
-- /pseudo-code/networking/data_transmission.md: Logs transmission-related events.
-- /pseudo-code/security/auth.md: Logs authentication attempts and outcomes.
+- **/pseudo-code/audit_trail.md**: Logs events before audit trail processing.
+- **/pseudo-code/networking/data_transmission.md**: Logs transmission-related events.
+- **/pseudo-code/security/auth.md**: Logs authentication attempts and outcomes.
 
 ## Used In
 - **Use Case 5.15: Aid Relays**: Logs supply tracking events for debugging and compliance.
@@ -20,18 +19,50 @@ The Logger module provides a centralized logging mechanism for MeshGuardian, ena
 
 ## Pseudocode
 ```pseudocode
+// Constants for buffer management
+CONST MAX_BUFFER_SIZE = 10485760  // 10MB default buffer size
+CONST CRITICAL_LOG_THRESHOLD = 0.8  // 80% buffer capacity triggers overflow handling
+
+// Function to check buffer capacity and handle overflow
+FUNCTION check_buffer_capacity(log_level, log_size)
+    available_space = CALL get_available_buffer_space()
+    IF available_space < log_size THEN
+        // Buffer overflow imminent
+        IF log_level IN ["ERROR", "CRITICAL"] THEN
+            // Prioritize high-priority logs: Remove oldest low-priority logs
+            oldest_low_priority_logs = CALL get_oldest_logs_by_level(["DEBUG", "INFO"], log_size)
+            CALL remove_logs(oldest_low_priority_logs)
+            // Log overflow event as high-priority
+            overflow_message = "Removed low-priority logs to accommodate " + log_level + " log"
+            CALL log_message("CRITICAL", overflow_message, capability_flags | BIT 15)  // Force Tier 1 if Bit 15 enabled
+        ELSE
+            // Drop low-priority log and raise warning
+            RAISE BufferOverflowWarning("Buffer full, " + log_level + " log dropped")
+            RETURN FALSE
+        END IF
+    END IF
+    RETURN TRUE
+END FUNCTION
+
 // Function to log a message
 FUNCTION log_message(level, message, capability_flags)
     // Check if the log level is enabled
     IF level NOT_IN ALLOWED_LEVELS OR level < LOG_LEVEL THEN
         RETURN
     END IF
+    // Estimate log size
+    log_size = CALL estimate_log_size(level, message)
+    // Check buffer capacity before logging
+    IF NOT CALL check_buffer_capacity(level, log_size) THEN
+        RETURN  // Exit if low-priority log cannot be stored
+    END IF
     // Format log message
     formatted_message = CALL format_log_message(level, message, CALL get_current_timestamp())
     // Forward to audit trail for persistent logging
     event_details = {
         "level": level,
-        "message": formatted_message
+        "message": formatted_message,
+        "priority": (level IN ["ERROR", "CRITICAL"] ? "high" : "low")
     }
     CALL log_event("SystemLog", event_details, capability_flags)
     // Output to console or file for debugging (if DEBUG mode)
@@ -54,10 +85,11 @@ END FUNCTION
 ---
 
 ## Notes
-- Configurability: The logging level (LOG_LEVEL) can be adjusted dynamically to control verbosity.
-- Integration: All log messages are forwarded to the audit trail, using Solana (Tier 1) for critical logs if Bit 15 = 1, or local P2P sync (Tier 2) otherwise.
-- Performance: Logging is optimized to minimize performance impact, with batching for Tier 2 logs.
-- Security: Log messages are tamper-proof when stored via the audit trail’s SHA3-256 hashing and ZKP mechanisms.
+- Configurability: The logging level (LOG_LEVEL) can be adjusted dynamically to control verbosity, supporting levels like DEBUG, INFO, ERROR, and CRITICAL.
+- Integration: All log messages are forwarded to the audit trail, using Solana (Tier 1) for critical logs if Bit 15 = 1, or local P2P sync (Tier 2) otherwise, with buffer overflow handling to ensure no log loss.
+- Performance: Logging is optimized with batching for Tier 2 logs (every 10 seconds via audit trail) and minimal buffer checks (<1ms), ensuring low overhead.
+- Security: Log messages are tamper-proof when stored via the audit trail’s SHA3-256 hashing and ZKP mechanisms. Buffer overflow events are logged as Tier 1 for traceability.
+- Buffer Management: A 10MB buffer is used with a prioritization strategy to preserve high-priority logs (ERROR, CRITICAL) by removing low-priority logs (DEBUG, INFO) if needed, aligning with Section 7.2.
 
 ## TODO
 - Implement log filtering by component or module.

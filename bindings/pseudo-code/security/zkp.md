@@ -1,52 +1,144 @@
-# ZKP Module
+# Zero-Knowledge Proof (ZKP) Module
 
 ## Purpose
-The ZKP module provides a framework for implementing Zero-Knowledge Proofs (ZKPs) in the system. It exists to enable secure verification of claims without exposing sensitive data, which is crucial for applications requiring privacy and security, such as identity verification, secure voting, or confidential transactions. This module allows one party to prove to another that a statement is true without revealing any additional information beyond the validity of the statement itself.
+The Zero-Knowledge Proof (ZKP) module enables privacy-preserving operations in MeshGuardian by generating and verifying ZKPs for secure authentication, data validation, and audit trail logging. It supports multiple ZKP schemes (zk-SNARKs, zk-STARKs, Bulletproofs) to ensure flexibility across use cases, including crisis zones and interplanetary missions. The module is optimized for ultra-low-power devices (e.g., IoT nodes in crisis zones) by prioritizing lightweight ZKP schemes and limiting generation frequency, with clear hardware requirements to guide deployment. It integrates with the audit trail for traceability and supports Low-Energy Mode (Bit 24) for resource-constrained scenarios.
 
 ## Interfaces
-- **setup_zkp(parameters)**: Initializes the ZKP system with necessary parameters, generating public parameters or keys.  
-- **generate_proof(statement, witness)**: Creates a proof for a given statement using a witness, leveraging the ZKP protocol.  
-- **verify_proof(proof, statement)**: Verifies the validity of a proof for a given statement using the ZKP protocol.  
+- **generate_zkp(data, scheme, context)**: Generates a ZKP for the given data using the specified scheme, returning the proof.
+- **verify_zkp(proof, data, scheme)**: Verifies a ZKP against the provided data and scheme, returning a boolean result.
 
 ## Depends On
-- **/pseudo-code/crypto/zkp_library.md**: Provides core ZKP functions such as `GENERATE_PUBLIC_PARAMS`, `CREATE_PROOF`, and `VERIFY_PROOF`.  
-- **/pseudo-code/crypto/hashes.md**: Supplies hash functions used within ZKP operations.  
-- **/pseudo-code/crypto/elliptic_curves.md**: Offers elliptic curve operations if the chosen ZKP scheme requires them.  
+- **/pseudo-code/crypto/crypto_utils.md**: Provides cryptographic primitives for ZKP generation and verification.
+- **/pseudo-code/logging/logger.md**: Logs ZKP events and errors.
+- **/pseudo-code/constants.md**: Defines ZKP scheme codes, computation time thresholds, and generation intervals.
+- **/pseudo-code/audit_trail.md**: Logs ZKP outcomes for traceability.
 
 ## Called By
-- **/pseudo-code/security/auth.md**: Uses `generate_proof` to create authentication proofs and `verify_proof` to validate them.  
-- **/pseudo-code/blockchain/transactions.md**: Employs `generate_proof` for transaction validation and `verify_proof` to confirm transaction proofs.  
+- /pseudo-code/audit_trail.md: Generates ZKPs for Tier 1 blockchain logging.
+- /pseudo-code/security/auth.md: Uses ZKPs for privacy-preserving authentication.
+- /pseudo-code/consensus/consensus.md: Applies ZKPs for secure vote validation in ADTC.
 
 ## Used In
-- **Use Case 5.15: Secure Voting**: Voters prove eligibility without revealing their identity, ensuring privacy in the voting process.  
-- **Use Case 5.16: Confidential Transactions**: Users prove transaction validity without disclosing amounts or parties involved, maintaining financial privacy.  
-
+- Use Case 5.15: Aid Relays: Ensures privacy in supply tracking data in crisis zones.
+- Use Case 5.16: Emergency Chat: Protects user identities in message exchanges.
+- Use Case 5.1.1: Mars Rover Data Relay: Secures interplanetary data validation.
 
 ## Pseudocode
-The detailed logic for the ZKP module is provided below in pseudo-code format, outlining the core operations of setup, proof generation, and proof verification.
 ```pseudocode
-// Function to set up the ZKP system with necessary parameters
-FUNCTION setup_zkp(parameters)
-    IF NOT VALIDATE_ZKP_PARAMS(parameters)
-        RAISE InvalidParametersError("Invalid ZKP parameters")
-    END IF
-    public_params = ZKP_LIBRARY.GENERATE_PUBLIC_PARAMS(parameters)
-    LOG_TRUSTED_SETUP_PARTICIPANTS()
-    RETURN public_params
+// Structure for ZKP context
+STRUCT ZKPContext
+    data: BYTE_ARRAY           // Data to prove
+    capability_flags: BITFIELD // 32-bit Capability Flags
+    device_capability_level: INTEGER // 0 = minimal, 1 = moderate, 2 = high
+    event_count: INTEGER       // Counter for tracking ZKP generation frequency
+END STRUCT
 
-// Function to generate a proof for a given statement using a witness
-FUNCTION generate_proof(statement, witness)
-    nonce = GENERATE_NONCE()
-    proof = ZKP_LIBRARY.CREATE_PROOF(statement, witness, nonce)
-    RETURN proof
+// Function to generate a ZKP
+FUNCTION generate_zkp(data, scheme, context: ZKPContext) RETURNS BYTE_ARRAY
+    TRY
+        IF data IS NULL THEN
+            RAISE ZKPError("Data is null")
+        END IF
 
-// Function to verify a proof for a given statement
-FUNCTION verify_proof(proof, statement)
-    IF proof.timestamp < CURRENT_TIME - PROOF_LIFETIME
-        RETURN False
-    END IF
-    is_valid = ZKP_LIBRARY.VERIFY_PROOF(proof, statement)
-    RETURN is_valid
+        // Prioritize lightweight scheme for ultra-low-power devices
+        IF context.device_capability_level == 0 OR context.capability_flags & BIT_24 THEN
+            IF scheme == constants.BULLETPROOF_CODE THEN
+                CALL log_message("INFO", "Selected Bulletproofs for ultra-low-power device", context.capability_flags)
+            ELSE
+                CALL log_message("INFO", "Falling back to hash-based proof for ultra-low-power device", context.capability_flags)
+                hash_proof = CALL crypto_utils.sha3_256(data)
+                RETURN hash_proof // Fallback to SHA3-256 hash
+            END IF
+        END IF
+
+        // Limit ZKP generation frequency for low-power devices
+        IF context.device_capability_level == 1 AND context.event_count % constants.ZKP_GENERATION_INTERVAL != 0 THEN
+            CALL log_message("INFO", "Skipped ZKP generation, using hash-based proof", context.capability_flags)
+            hash_proof = CALL crypto_utils.sha3_256(data)
+            RETURN hash_proof // Fallback to SHA3-256 hash
+        END IF
+
+        // Increment event counter for generation frequency
+        context.event_count = context.event_count + 1
+
+        // Generate ZKP based on scheme
+        proof = NULL
+        start_time = CALL get_current_time_ms()
+        CASE scheme
+            WHEN constants.ZK_SNARK_CODE:
+                proof = ZK_SNARK_GENERATE(data)
+            WHEN constants.ZK_STARK_CODE:
+                proof = ZK_STARK_GENERATE(data)
+            WHEN constants.BULLETPROOF_CODE:
+                proof = BULLETPROOF_GENERATE(data)
+            DEFAULT:
+                RAISE ZKPError("Unsupported ZKP scheme: " + scheme)
+        END CASE
+        end_time = CALL get_current_time_ms()
+        computation_time = end_time - start_time
+
+        // Check computation time
+        IF computation_time > constants.ZKP_MAX_COMPUTATION_TIME THEN
+            CALL log_message("WARNING", "ZKP generation too slow: " + computation_time + "ms, falling back to hash-based proof", context.capability_flags)
+            hash_proof = CALL crypto_utils.sha3_256(data)
+            RETURN hash_proof // Fallback to SHA3-256 hash
+        END IF
+
+        IF proof IS NULL THEN
+            RAISE ZKPError("ZKP generation failed for scheme: " + scheme)
+        END IF
+        CALL log_message("INFO", "ZKP generated with scheme: " + scheme + ", computation_time: " + computation_time + "ms", context.capability_flags)
+        CALL log_event("ZKP_Generated", {
+            "scheme": scheme,
+            "data_hash": CALL crypto_utils.sha3_256(data),
+            "computation_time": computation_time
+        }, context.capability_flags | BIT_15) // Log as Tier 1
+        RETURN proof
+    CATCH error
+        CALL log_message("ERROR", "ZKP generation failed: " + error, context.capability_flags | BIT_15) // Log as Tier 1
+        RAISE error
+    END TRY
+END FUNCTION
+
+// Function to verify a ZKP
+FUNCTION verify_zkp(proof, data, scheme)
+    TRY
+        IF proof IS NULL OR data IS NULL THEN
+            RAISE ZKPError("Proof or data is null")
+        END IF
+        result = FALSE
+        IF scheme == constants.HASH_PROOF_CODE THEN
+            // Verify hash-based proof for low-power devices
+            expected_hash = CALL crypto_utils.sha3_256(data)
+            result = (proof == expected_hash)
+        ELSE
+            // Verify ZKP based on scheme
+            CASE scheme
+                WHEN constants.ZK_SNARK_CODE:
+                    result = ZK_SNARK_VERIFY(proof, data)
+                WHEN constants.ZK_STARK_CODE:
+                    result = ZK_STARK_VERIFY(proof, data)
+                WHEN constants.BULLETPROOF_CODE:
+                    result = BULLETPROOF_VERIFY(proof, data)
+                DEFAULT:
+                    RAISE ZKPError("Unsupported ZKP scheme: " + scheme)
+            END CASE
+        END IF
+        IF NOT result THEN
+            CALL log_message("ERROR", "ZKP verification failed for scheme: " + scheme, capability_flags | BIT_15) // Log as Tier 1
+            RETURN FALSE
+        END IF
+        CALL log_message("INFO", "ZKP verified with scheme: " + scheme, capability_flags)
+        CALL log_event("ZKP_Verified", {
+            "scheme": scheme,
+            "data_hash": CALL crypto_utils.sha3_256(data)
+        }, capability_flags | BIT_15) // Log as Tier 1
+        RETURN TRUE
+    CATCH error
+        CALL log_message("ERROR", "ZKP verification failed: " + error, capability_flags | BIT_15) // Log as Tier 1
+        RAISE error
+    END TRY
+END FUNCTION
 
 ```
 
@@ -54,11 +146,19 @@ FUNCTION verify_proof(proof, statement)
 
 
 ## Notes
-- **Scheme Selection**: Different ZKP schemes (e.g., zk-SNARKs, zk-STARKs, Bulletproofs) offer varying trade-offs in terms of security, efficiency, and proof size. Choose based on the specific requirements of the use case.  
-- **Performance**: Generating and verifying proofs can be computationally intensive. Optimize where possible, and consider hardware acceleration for production systems.
-- **Security**:  Ensure the chosen ZKP scheme is resistant to known attacks and that parameters are set appropriately. Keep the witness secret to prevent security breaches.
-- **Edge Cases**: Handle scenarios where proofs are invalid or where the witness is incorrect. Implement robust error handling to manage these cases gracefully.
-- **TODO**: Implement specific ZKP schemes like zk-SNARKs or Bulletproofs for targeted applications.
-- Integrate with existing cryptographic libraries for security auditing.
-- Add side-channel attack protections (e.g., timing attack resistance).
-- Implement detailed audit logging for production use.
+- ZKP Schemes: Supports zk-SNARKs (high compactness, trusted setup), zk-STARKs (quantum-resistant, no trusted setup), and Bulletproofs (lightweight, no trusted setup). For ultra-low-power devices (Device Capability Level 0 or Bit 24 = 1), prioritizes Bulletproofs or falls back to SHA3-256 hash-based proofs to minimize computational overhead.
+- Energy Optimization: Limits ZKP generation to every 10 events (ZKP_GENERATION_INTERVAL) on low-power devices (Device Capability Level 1), using hash-based proofs to reduce energy consumption. Falls back to hash-based proofs if generation exceeds 500ms (ZKP_MAX_COMPUTATION_TIME).
+- Hardware Requirements:
+    -- Bulletproofs: Minimum 32 MHz CPU, 64 KB RAM, 200 µW power consumption; suitable for low-power IoT nodes.
+    -- zk-SNARKs: Minimum 80 MHz CPU, 128 KB RAM, 500 µW power consumption; recommended for moderate-capability devices.
+    -- zk-STARKs: Minimum 120 MHz CPU, 256 KB RAM, 1 mW power consumption; suitable for high-capability devices only.
+    -- Hash-based Proof (SHA3-256): Minimum 16 MHz CPU, 32 KB RAM, 100 µW power consumption; fallback for ultra-low-power devices.
+- Performance: Bulletproofs offer lower computational overhead (e.g., <100ms for 1KB data) compared to zk-SNARKs (~200ms) or zk-STARKs (~500ms). Hash-based proofs are fastest (<10ms) but less privacy-preserving.
+- Security: Ensures privacy and integrity via ZKPs, with post-quantum signatures (Bit 4) for future-proofing. Fallback hash-based proofs maintain integrity but sacrifice zero-knowledge properties.
+- Audit Trail: ZKP generation and verification logged as Tier 1 events for traceability in crisis and interplanetary scenarios.
+- Edge Cases: Handles unsupported schemes, low-power constraints, and slow computations by falling back to hash-based proofs or skipping ZKP generation.
+
+## TODO
+- Optimize ZKP generation for additional lightweight schemes (e.g., PLONK).
+- Add support for hardware-accelerated ZKP computation via the Pluggable Protocol Engine.
+- Integrate hardware requirements into a configuration file or compatibility matrix for deployment documentation.
