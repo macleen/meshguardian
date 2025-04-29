@@ -48,3 +48,31 @@ To contribute to MeshGuardian, set up your local environment as follows:
    ```bash
    git clone https://github.com/YOUR_USERNAME/meshguardian.git
    cd meshguardian
+
+
+
+## What you need to do to contribute
+
+1. Fork the repository at `https://github.com/macleen/meshguardian`.
+2. Clone your fork: `git clone https://github.com/your-username/meshguardian.git`.
+3. Install dependencies: `pip install -r requirements.txt`.
+4. Set up the upstream remote: `git remote add upstream https://github.com/macleen/meshguardian.git`.
+
+## Making Changes
+- Create a branch: `git checkout -b feature/your-feature-name`.
+- Follow the pseudocode style in `bindings/pseudo-code/`.
+- Commit with clear messages: `git commit -m "Add feature: description"`.
+- Push to your fork: `git push origin feature/your-feature-name`.
+- Open a pull request to `macleen/meshguardian:main`, linking to relevant issues.
+
+## Issues and Features
+- Check “good first issue” on GitHub Issues for beginner-friendly tasks.
+- Suggest new features via issues or the MeshGuardian Forum.
+
+## Testing
+- Write tests for new features or bug fixes.
+- Run tests locally: `python -m unittest`.
+
+## Recognition
+- Contributors are listed in `CONTRIBUTORS.md`.
+- Active contributors may gain maintainer status.
