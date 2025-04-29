@@ -1,6 +1,6 @@
 # Contributing to MeshGuardian
 
-[Full documentation available at https://meshguardian.com](https://meshguardian.com)
+[Full documentation available at https://meshguardian.com](https://meshguardian.com/docs)
 
 We’re thrilled that you’re considering contributing to **MeshGuardian**, a resilient, secure, and modular mesh networking protocol built for Delay-Tolerant Networks (DTNs), off-grid communities, and interplanetary systems. MeshGuardian enables reliable communication in challenging environments, from crisis zones to deep space, using protocols like LoRa, DTN Bundle Protocol, and Asynchronous Delay-Tolerant Consensus (ADTC) with features like multi-blockchain logging and slashing logic for node accountability. Whether you’re a developer, researcher, documenter, or space tech enthusiast, your contributions are vital to shaping the future of decentralized networking.
 
