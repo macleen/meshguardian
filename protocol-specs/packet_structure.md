@@ -1,4 +1,3 @@
-
 # MeshGuardian Packet Structure
 
 The MeshGuardian protocol uses a modular, secure, and extensible packet structure designed for Delay-Tolerant Networks (DTNs) and challenging connectivity environments.
@@ -9,43 +8,45 @@ The MeshGuardian protocol uses a modular, secure, and extensible packet structur
 
 | Segment   | Size         | Description |
 |-----------|--------------|-------------|
-| **Header**    | 128 bytes    | Routing, synchronization, control, encryption flags, and plugin metadata |
+| **Header**    | 128 bytes    | Routing, synchronization, control, encryption flags, ZKP, and plugin metadata |
 | **Payload**   | Variable     | Compressed and encrypted application data |
 | **Trailer**   | 96 bytes     | Signature + Audit Trail Hash for integrity and traceability |
 
 > Example total packet size: **491 bytes**  
-> Payload: 267B (based on compression)
+> Payload: 267B (compressed with lz4/zstd, typical for JSON/binary messages)
 
 ---
 
 ## Header (128 bytes)
 
 Includes:
-- `Version` (1B), `Packet Type` (1B), `Priority` (1B)
-- `Capability Flags` (4B), `Protocol ID` (1B)
+- `Version` (1B), `Packet Type` (1B), `Priority Flag` (1B, `BIT_17` for high-priority)
+- `Capability Flags` (4B, e.g., `BIT_13` TinyML, `BIT_24` Low-Energy Mode)
+- `Protocol ID` (1B), `Consensus Mode Flag` (1B, `0x01` PoS, `0x02` PBFT, `0x03` ADTC)
 - `Source Node ID`, `Destination Node ID`, `Relay ID` (3 × 16B)
-- `Sequence Number` (4B), `Timestamp` (8B)
-- `Hop Count`, `TTL`, `Compression Type`, `Encryption Algorithm ID`
-- `Plugin Data` (4B), `Biometric Hash` (32B)
-- `Energy Mode`, `Congestion Flags`, `FEC Flags` + `Checksum` (4B)
-- `Reserved` (2B padding for alignment)
+- `Sequence Number` (4B), `Timestamp` (8B), `Vector Clock` (8B)
+- `Hop Count` (1B), `TTL` (1B), `Compression Type` (1B, e.g., lz4, zstd)
+- `Encryption Algorithm ID` (1B, e.g., AES-256, Kyber)
+- `Plugin Data` (4B), `ZKP Proof` (16B, zk-SNARKs/Bulletproofs)
+- `Energy Mode` (1B), `Congestion Flags` (1B), `FEC Flags` (1B)
+- `Checksum` (4B), `Reserved` (2B padding for alignment)
 
 ---
 
 ## Payload (Variable Size)
 
 The payload includes:
-- Encrypted JSON or binary message
-- Optional Forward Error Correction (FEC) block
-- Optional redacted fields (PrivacySafePod) for field-level encryption
+- Encrypted JSON or binary message (e.g., AES-256, Kyber)
+- Optional Forward Error Correction (FEC) block (Reed-Solomon)
+- Optional PrivacySafePod for field-level encryption (inner layer)
 
-Payload is compressed (e.g., zlib, Brotli) **before** encryption.
+Payload is compressed (e.g., lz4, zstd) **before** encryption.
 
 ---
 
 ## Trailer (96 bytes)
 
-- **Signature (64B):** Ensures authenticity (e.g., Schnorr)
+- **Signature (64B):** Ensures authenticity (e.g., Schnorr, Ed25519)
 - **Audit Trail Hash (32B):** Used for local + blockchain logging (e.g., Solana Tier 1)
 
 ---
@@ -53,9 +54,11 @@ Payload is compressed (e.g., zlib, Brotli) **before** encryption.
 ## Security & Trust
 
 Each packet is validated using:
-- Sequence Number + Timestamp for deduplication
+- Sequence Number + Timestamp + Vector Clock for deduplication and replay protection
+- ZKP Proof for zero-knowledge trust verification (e.g., zk-SNARKs)
 - Signature for zero-trust validation
-- Optional blockchain sync via Tier 1 audit events
+- Blockchain sync via Tier 1 audit events (`BIT_15`) with log compression
+- Audit Trail Hash ensures traceability across local, P2P, and blockchain logs
 
 ---
 
@@ -63,3 +66,5 @@ Each packet is validated using:
 
 - [consensus_engine.md](./consensus_engine.md)
 - [synchronization.md](./synchronization.md)
+- [hardware_requirements.md](./hardware_requirements.md)
+- [CONTRIBUTING.md](./CONTRIBUTING.md)

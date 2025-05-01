@@ -15,7 +15,7 @@ MeshGuardian is a next-generation mesh networking protocol designed for the worl
 
 Looking for technical specs, protocol diagrams, or SDK usage?
 
-👉 Visit: [https://meshguardian.com](https://meshguardian.com)
+👉 Visit: [https://meshguardian.com](https://meshguardian.com/docs)
 
 ---
 

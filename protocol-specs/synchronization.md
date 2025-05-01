@@ -1,4 +1,3 @@
-
 # MeshGuardian Synchronization Mechanism
 
 MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) through a robust, energy-aware synchronization engine. This system adapts to scenarios where nodes may be offline for extended periods or connected only intermittently.
@@ -17,19 +16,19 @@ MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) thro
 ## Key Features
 
 - **Nano-Sync Packets**  
-  Minimal overhead sync messages (~10 bytes) for extreme low-power operation.
+  Minimal overhead sync messages (~10 bytes: 4B sequence, 1B flag, 5B metadata) for extreme low-power operation.
 
 - **Event Hashing + Audit Chain**  
-  All events hashed and stored for traceability. Critical entries optionally anchored to Solana or other chains.
+  All events hashed and stored for traceability. Critical entries anchored to Solana, Avalanche, or Ethereum with log compression.
 
-- **Logical Clocks & Lamport Timestamps**  
-  Ideal for async systems where UNIX time fails (e.g., Mars base vs. Earth).
+- **Vector Clocks & Lamport Timestamps**  
+  Vector clocks extend Lamport timestamps for async systems (e.g., Mars base vs. Earth).
 
 - **Conflict Resolution**  
-  Merges conflicting updates via vector clock detection + plugin arbitration.
+  Merges conflicting updates via vector clock detection + lowest hash arbitration (AI plugins planned).
 
 - **Offline Buffering**  
-  Nodes store unsent packets with TTL until reconnected.
+  Nodes store unsent packets with TTL (decremented per hop) until reconnected, up to `MAX_BUFFER_PERSISTENCE` (30 days).
 
 ---
 
@@ -38,6 +37,7 @@ MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) thro
 - First responders syncing bodycam footage in disaster zones
 - Mars rover syncing telemetry to Earth during blackout windows
 - Remote wildlife sensors buffering environmental data for weeks
+- Refugee camp nodes syncing supply chain data in low-connectivity areas
 
 ---
 
@@ -45,26 +45,28 @@ MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) thro
 
 | Field              | Size | Description |
 |-------------------|------|-------------|
-| `sequence_number` | 4B   | For ordering + deduplication |
+| `sequence_number` | 4B   | For ordering + deduplication, prevents replay attacks |
 | `timestamp`       | 8B   | Logical or real-time clock |
-| `hop_count`       | 2B   | Tracks number of relays |
-| `ttl`             | 2B   | Time-to-live; auto-decrements |
-| `nano_sync_flag`  | 1B   | Activates lightweight sync mode |
+| `vector_clock`    | 8B   | Tracks causal dependencies for async sync |
+| `hop_count`       | 1B   | Tracks number of relays |
+| `ttl`             | 1B   | Time-to-live; decrements per hop |
+| `nano_sync_flag`  | 1B   | Activates lightweight sync mode (`BIT_18`) |
 | `audit_trail_hash`| 32B  | Hash of previous event in chain |
 
 ---
 
 ## Audit + Integrity
 
-- Tier 1: Critical events → Blockchain
+- Tier 1: Critical events (`BIT_15`) → Blockchain (Solana, Avalanche, Ethereum) with log compression
 - Tier 2: Local log + P2P sync
 - Sync checkpoints signed with Schnorr or Dilithium signatures
+- ZKP verification for audit events (e.g., zk-SNARKs, Bulletproofs)
 
 ---
 
 ## Plugin-Enhanced Sync
 
-- AI-powered merge arbitration (planned)
+- AI-powered merge arbitration (proposed, see `CONTRIBUTING.md`)
 - Redundancy-aware multi-path re-sync
 - Burst-throttle control for congestion collapse
 
@@ -74,3 +76,5 @@ MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) thro
 
 - [packet_structure.md](./packet_structure.md)
 - [consensus_engine.md](./consensus_engine.md)
+- [hardware_requirements.md](./hardware_requirements.md)
+- [CONTRIBUTING.md](./CONTRIBUTING.md)
