@@ -55,7 +55,7 @@ MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) thro
 
 ---
 
-![hop_count and ttl management](/docs/assets/hopcount_ttl_management.webp)
+![Sync Diagram](/docs/assets/hopcount_ttl_management.webp)
 
 ---
 
