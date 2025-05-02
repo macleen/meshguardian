@@ -28,7 +28,7 @@ MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) thro
   Merges conflicting updates via vector clock detection + lowest hash arbitration (AI plugins planned).
 
 - **Offline Buffering**  
-  Nodes store unsent packets with TTL (decremented per hop) until reconnected, up to `MAX_BUFFER_PERSISTENCE` (30 days).
+  Nodes store unsent packets with TTL (decremented per hop, default: 50 terrestrial, 10 interplanetary) until reconnected, up to `MAX_BUFFER_PERSISTENCE` (30 days).
 
 ---
 
@@ -48,19 +48,24 @@ MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) thro
 | `sequence_number` | 4B   | For ordering + deduplication, prevents replay attacks |
 | `timestamp`       | 8B   | Logical or real-time clock |
 | `vector_clock`    | 8B   | Tracks causal dependencies for async sync |
-| `hop_count`       | 1B   | Tracks number of relays |
-| `ttl`             | 1B   | Time-to-live; decrements per hop |
+| `hop_count`       | 1B   | Tracks number of relays (0–255, drops if ≥255) |
+| `ttl`             | 1B   | Time-to-live; decrements per hop (default: 50 terrestrial, 10 interplanetary) |
 | `nano_sync_flag`  | 1B   | Activates lightweight sync mode (`BIT_18`) |
 | `audit_trail_hash`| 32B  | Hash of previous event in chain |
+
+---
+
+![hop_count and ttl management](/docs/assets/hopcount_ttl_management.webp)
 
 ---
 
 ## Audit + Integrity
 
 - Tier 1: Critical events (`BIT_15`) → Blockchain (Solana, Avalanche, Ethereum) with log compression
-- Tier 2: Local log + P2P sync
+- Tier 2: Local log + P2P sync; logs `hop_count` > 200 or misconfigured TTLs (e.g., 255) as anomalies
 - Sync checkpoints signed with Schnorr or Dilithium signatures
 - ZKP verification for audit events (e.g., zk-SNARKs, Bulletproofs)
+- Sequence number and vector clock validation prevent routing loops and replays
 
 ---
 
@@ -78,3 +83,4 @@ MeshGuardian ensures data consistency across Delay-Tolerant Networks (DTNs) thro
 - [consensus_engine.md](./consensus_engine.md)
 - [hardware_requirements.md](./hardware_requirements.md)
 - [CONTRIBUTING.md](./CONTRIBUTING.md)
+- DTN Standards: IETF SCHL (draft-fall-dtnrg-schl-00), Bundle Protocol Version 7 (draft-ietf-dtn-bpbis-28)
