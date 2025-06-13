@@ -83,38 +83,29 @@ FUNCTION detect_cycle(route)
 
 // Function to select the best route
 FUNCTION select_route(source, destination, packet)
-    // Check if source is the destination
     IF source == destination
         RETURN "Local delivery"
     END IF
-    // Check Hop Count against TTL to prevent loops
     IF packet.headers.hop_count >= packet.headers.ttl
         RAISE RoutingError("TTL exceeded, potential loop detected")
     END IF
-    // Select route based on Capability Flags
-    IF packet.headers.capability_flags BIT 13
-        // ML-driven routing
+    IF packet.headers.capability_flags & constants.ML_ROUTING_BIT
         route = CALL find_ml_route(source, destination, packet.network_metrics)
     ELSE
-        // Static routing (shortest path)
         route = CALL find_shortest_path(source, destination)
     END IF
-    // Validate route
     IF route IS NOT NULL
-        // Filter out nodes predicted to fail if Bit 14 is enabled
-        IF packet.headers.capability_flags BIT 14
+        IF packet.headers.capability_flags & constants.ML_FAILURE_PREDICTION_BIT
             filtered_route = []
             FOR each node IN route
                 IF NOT CALL predict_failure_ml(node.battery, node.uptime, node.rssi_trend)
                     APPEND filtered_route, node
                 END IF
             IF filtered_route IS NOT EMPTY
-                // Increment Hop Count for next hop
                 packet.headers.hop_count = packet.headers.hop_count + 1
                 RETURN filtered_route
             END IF
         ELSE
-            // Increment Hop Count for next hop
             packet.headers.hop_count = packet.headers.hop_count + 1
             RETURN route
         END IF
