@@ -38,10 +38,10 @@ FUNCTION validate_key(key)
         RAISE KeyError("Insufficient key entropy")
     END IF
     RETURN TRUE
-END FUNCTION
+END FUNCTION 
 
 // Function: generate_key
-FUNCTION generate_key(context)
+FUNCTION generate_key(context, capability_flags)
     master_key = GET_MASTER_KEY()
     IF master_key IS NULL OR master_key IS EMPTY THEN
         RAISE KeyError("Master key is null or empty")
@@ -50,18 +50,18 @@ FUNCTION generate_key(context)
         key = HKDF(master_key, salt=context, info="key_separation")
         CALL validate_key(key)
         key_id = GENERATE_UNIQUE_ID()
-        CALL tag_key(key_id, context)
+        CALL tag_key(key_id, context, capability_flags)
         CALL store_key(key_id, key)
         CALL log_message("INFO", "Key generated for context: " + context + " with ID: " + key_id, capability_flags)
         RETURN key_id
     CATCH hkdf_error
-        CALL log_message("ERROR", "Key generation failed: " + hkdf_error, capability_flags | BIT 15)  // Log as Tier 1
+        CALL log_message("ERROR", "Key generation failed: " + hkdf_error, capability_flags | LOG_TIER_1_FLAG)  // Log as Tier 1
         RAISE KeyError("Key generation failed: " + hkdf_error)
     END TRY
 END FUNCTION
 
 // Function: tag_key
-FUNCTION tag_key(key_id, purpose)
+FUNCTION tag_key(key_id, purpose, capability_flags)
     IF purpose IN ["ml_protocol_selection", "ml_failure_prediction"] THEN
         SET_KEY_METADATA(key_id, "ml_enabled", TRUE)
     END IF
@@ -73,17 +73,17 @@ FUNCTION tag_key(key_id, purpose)
 END FUNCTION
 
 // Function: validate_purpose
-FUNCTION validate_purpose(key_id, requested_purpose)
+FUNCTION validate_purpose(key_id, requested_purpose, capability_flags)
     stored_purpose = GET_KEY_METADATA(key_id, "purpose")
     IF stored_purpose != requested_purpose THEN
-        CALL log_message("ERROR", "Key usage violation attempt for ID: " + key_id + " with purpose: " + requested_purpose, capability_flags | BIT 15)  // Log as Tier 1
+        CALL log_message("ERROR", "Key usage violation attempt for ID: " + key_id + " with purpose: " + requested_purpose, capability_flags | LOG_TIER_1_FLAG)  // Log as Tier 1
         RAISE KeyUsageViolationError("Key not valid for purpose: " + requested_purpose)
     END IF
 END FUNCTION
 
 // Function: use_key
-FUNCTION use_key(key_id, purpose)
-    CALL validate_purpose(key_id, purpose)
+FUNCTION use_key(key_id, purpose, capability_flags)
+    CALL validate_purpose(key_id, purpose, capability_flags)
     key = CALL retrieve_key(key_id)
     CALL log_message("INFO", "Key used for purpose: " + purpose + " with ID: " + key_id, capability_flags)
     RETURN key
@@ -94,12 +94,13 @@ END FUNCTION
 ---
 
 ## Notes:
-- Cryptographic Best Practice: Keys have singular, tightly-scoped purposes to prevent collisions and leaks, with validation for integrity.
-- Tagging Metadata: Keys are labeled with tags (e.g., "enc", "mac", "sig") or protocol-specific roles.
-- Access Control: Usage is gated through purpose-checking logic, with error handling for violations.
-- Hierarchical Derivation: Derives separate keys from master keys with explicit purpose input into HKDF, validated for format and entropy.
-- Error Handling: Validates keys and purposes, raising KeyError or KeyUsageViolationError, with logging via logger.md.
--Hardware Enforcement: Binds usage policies at the hardware level if using an HSM.
+- Cryptographic Best Practice: Keys have singular, tightly-scoped purposes to prevent collisions and leaks, with validation for integrity.  
+- Tagging Metadata: Keys are labeled with tags (e.g., "enc", "mac", "sig") or protocol-specific roles. 
+- Access Control: Usage is gated through purpose-checking logic, with error handling for violations.  
+- Hierarchical Derivation: Derives separate keys from master keys with explicit purpose input into HKDF, validated for format and entropy.  
+- Error Handling: Validates keys and purposes, raising KeyError or KeyUsageViolationError, with logging via logger.md.  
+- Hardware Enforcement: Binds usage policies at the hardware level if using an HSM.  
+- 64-bit Capability Flags Transition: This module has been updated to support 64-bit capability flags. The capability_flags parameter is now a 64-bit integer, and hardcoded bit positions (e.g., BIT 15) have been replaced with symbolic constants (e.g., LOG_TIER_1_FLAG) defined in /pseudo-code/shared/constants.md. Ensure the logging dependency (/pseudo-code/logging/logger.md) supports 64-bit integers.
 
 ## TODO
 - Integrate hierarchical deterministic key derivation (HKDF) with tagged context info.

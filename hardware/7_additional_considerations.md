@@ -15,6 +15,7 @@ The Additional Considerations module provides supplementary guidance and best pr
 - **/pseudo-code/device/hardware_config.md**: Uses `apply_config` to adjust hardware settings for power optimization and security.  
 - **/pseudo-code/security/encryption.md**: Leverages encryption functions to secure data and communications.  
 - **/pseudo-code/monitoring/node_monitor.md**: Integrates with node monitoring to track environmental conditions.  
+- **/protocol-specs/capability_flags.md**: Defines 64-bit capability flags used in power and security optimizations.  
 
 ## Called By
 - Deployment scripts that configure nodes for specific operational environments.  
@@ -34,7 +35,7 @@ FUNCTION optimize_power_usage(device_id)
     // Disable unused hardware components
     DISABLE_UNUSED_INTERFACES(device_id)
     // Enable power-saving modes
-    ENABLE_POWER_SAVING_MODE(device_id)
+    ENABLE_LOW_ENERGY_MODE(device_id, Bit 23)  // Align with protocol-specs/capability_flags.md
     // Log power optimization actions
     LOG("Power usage optimized for " + device_id)
 
@@ -42,8 +43,12 @@ FUNCTION optimize_power_usage(device_id)
 FUNCTION enhance_security(device_id)
     // Enable firewall rules
     ENABLE_FIREWALL(device_id)
-    // Update encryption keys
-    UPDATE_ENCRYPTION_KEYS(device_id)
+    // Update encryption keys, using post-quantum cryptography if enabled
+    IF CHECK_CAPABILITY_FLAG(Bit 39) THEN
+        UPDATE_QUANTUM_ENCRYPTION_KEYS(device_id)
+    ELSE
+        UPDATE_ENCRYPTION_KEYS(device_id)
+    END IF
     // Enforce strong authentication
     ENFORCE_STRONG_AUTH(device_id)
     // Log security enhancement actions
@@ -65,8 +70,10 @@ FUNCTION monitor_environmental_conditions(device_id)
 ---
 
 ## Notes
-- **Power Management**: Consider using dynamic power scaling based on network activity to further optimize energy usage.  
-- **Security**: Regularly update security protocols and keys to adapt to evolving threats.  
+- **Power Management**: Use dynamic power scaling based on network activity, considering capability flags like Bit 23 (Low-Energy Mode), to optimize energy usage. 
+- **Security**: Regularly update security protocols and keys, leveraging post-quantum cryptography (Bit 39) when enabled, to adapt to evolving threats.  
 - **Environmental Monitoring**: Integrate with automated cooling or heating systems if operating in extreme conditions.  
 - **Performance**: Balance optimizations with performance requirements to avoid degrading critical operations.  
+- **Capability Flags**: Configure and validate 64-bit capability flags (e.g., Bit 23 for Low-Energy Mode, Bit 36 for extended compression) to ensure protocol compliance; see protocol-specs/capability_flags.md.  
 - **TODO**: Develop automated scripts for periodic security audits and power usage assessments.  
+- **TODO**: Implement optimization routines for 64-bit capability flag features, such as multi-blockchain logging (Bit 37) and node degradation (Bit 38).

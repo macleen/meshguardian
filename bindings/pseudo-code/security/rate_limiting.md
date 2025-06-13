@@ -134,7 +134,6 @@ ON KEY_ROTATION_EVENT:
 - **Performance**: Caching optimizes frequent reads, minimizing latency in high-volume systems.
 - **Security**: Protects against time manipulation with monotonic clocks (implied) and storage tampering with encryption.
 - **Adaptive Limiting**: Adjusts max_attempts for new devices or based on risk signals from /pseudo-code/security/risk_assessment.md.
-
-
+- **Capability Flags**: This module does not currently interact with capability flags. However, dependent modules like logging (/pseudo-code/logging/logger.md) and risk assessment (/pseudo-code/security/risk_assessment.md) may rely on 64-bit capability flags. Ensure these modules are updated for compatibility with the system’s 64-bit transition.
 
 **TODO**: Integrate machine learning for anomaly detection and WAF/CDN integration for distributed protection.

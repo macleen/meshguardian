@@ -1,7 +1,7 @@
 # Consensus Module
 
 ## Purpose
-The Consensus module ensures decentralized agreement on data validity, routing, and blockchain updates in MeshGuardian’s mesh network. It supports Proof-of-Stake (PoS) for low-priority packets, Practical Byzantine Fault Tolerance (PBFT) for high-priority packets, and Asynchronous Delay-Tolerant Consensus (ADTC) for extreme-delay environments (15-30 minute RTTs) in the Interplanetary Profile. The module is modular, allowing new consensus mechanisms via the Pluggable Protocol Engine, with robust error handling and logging for traceability. For interplanetary deployments, ADTC incorporates dynamic timeout adjustments and robust buffering to mitigate disruptions from unpredictable orbital dynamics or prolonged outages.
+The Consensus module ensures decentralized agreement on data validity, routing, and blockchain updates in MeshGuardian’s mesh network. It supports Proof-of-Stake (PoS) for low-priority packets, Practical Byzantine Fault Tolerance (PBFT) for high-priority packets, and Asynchronous Delay-Tolerant Consensus (ADTC) for extreme-delay environments (15-30 minute RTTs) in the Interplanetary Profile. The module is modular, allowing new consensus mechanisms via the Pluggable Protocol Engine, with robust error handling and logging for traceability. For interplanetary deployments, ADTC incorporates dynamic timeout adjustments and robust buffering to mitigate disruptions from unpredictable orbital dynamics or prolonged outages. The module leverages 64-bit capability flags for consensus modes and interplanetary features (see /protocol-specs/capability_flags.md).
 
 ## Interfaces
 - **validate_packet(packet, nodes, consensus_mode)**: Validates a packet using the specified consensus mode (PoS, PBFT, ADTC).
@@ -31,7 +31,7 @@ STRUCT ConsensusContext
     packet: Packet              // Packet to validate
     nodes: LIST[Node]          // Participating nodes
     consensus_mode: INTEGER    // Consensus mode (PoS, PBFT, ADTC)
-    capability_flags: BITFIELD // 32-bit Capability Flags
+    capability_flags: BITFIELD64 // 64-bit Capability Flags
     vector_clock: MAP[NodeID, INTEGER]  // Vector clock for ADTC
     node_weights: MAP[NodeID, FLOAT]    // Weights based on uptime, success rate, solar exposure
 END STRUCT
@@ -61,7 +61,7 @@ FUNCTION adjust_adtc_timeout(context: ConsensusContext) RETURNS INTEGER
         CALL log_message("INFO", "ADTC timeout adjusted to " + new_timeout + " seconds, RTT: " + current_rtt, context.capability_flags)
         RETURN new_timeout
     CATCH error
-        CALL log_message("ERROR", "Failed to adjust ADTC timeout: " + error, context.capability_flags | BIT_15) // Log as Tier 1
+        CALL log_message("ERROR", "Failed to adjust ADTC timeout: " + error, context.capability_flags | BIT(37)) // Log as Tier 1
         RETURN constants.A DTC_TIMEOUT // Fallback to default
     END TRY
 END FUNCTION
@@ -78,7 +78,7 @@ FUNCTION validate_packet(context: ConsensusContext)
             WHEN constants.PBFT_CONSENSUS_CODE:
                 RETURN validate_pbft(context)
             WHEN constants.A DTC_CONSENSUS_CODE:
-                IF NOT (context.capability_flags & BIT_28) THEN
+                IF NOT (context.capability_flags & BIT(40)) THEN  // Bit 40 for interplanetary mode
                     RAISE ConsensusError("ADTC not supported")
                 END IF
                 RETURN validate_adtc(context)
@@ -86,7 +86,7 @@ FUNCTION validate_packet(context: ConsensusContext)
                 RAISE ConsensusError("Unsupported consensus mode: " + context.consensus_mode)
         END CASE
     CATCH error
-        CALL log_message("ERROR", "Packet validation failed: " + error, context.capability_flags | BIT_15) // Log as Tier 1
+        CALL log_message("ERROR", "Packet validation failed: " + error, context.capability_flags | BIT(37)) // Log as Tier 1
         RAISE error
     END TRY
 END FUNCTION
@@ -103,7 +103,7 @@ FUNCTION validate_pos(context: ConsensusContext)
             RAISE ConsensusError("PoS consensus failed")
         END IF
     CATCH error
-        CALL log_message("ERROR", "PoS validation failed: " + error, context.capability_flags | BIT_15) // Log as Tier 1
+        CALL log_message("ERROR", "PoS validation failed: " + error, context.capability_flags | BIT(37)) // Log as Tier 1
         RAISE error
     END TRY
 END FUNCTION
@@ -122,7 +122,7 @@ FUNCTION validate_pbft(context: ConsensusContext)
         END IF
         RAISE ConsensusError("PBFT consensus failed")
     CATCH error
-        CALL log_message("ERROR", "PBFT validation failed: " + error, context.capability_flags | BIT_15) // Log as Tier 1
+        CALL log_message("ERROR", "PBFT validation failed: " + error, context.capability_flags | BIT(37)) // Log as Tier 1
         RAISE error
     END TRY
 END FUNCTION
@@ -166,20 +166,20 @@ FUNCTION validate_adtc(context: ConsensusContext)
             quorum_weight = 0.67 * SUM(context.node_weights.values()) // 2/3 of total weight
             IF weighted_sum >= quorum_weight THEN
                 CALL log_message("INFO", "ADTC consensus achieved for packet: " + context.packet.id + 
-                                 ", vector_clock: " + context.vector_clock, context.capability_flags | BIT_15)
+                                 ", vector_clock: " + context.vector_clock, context.capability_flags | BIT(37))
                 // Attempt blockchain anchoring with fallback
                 TRY
                     CALL log_event("ADTC_Anchoring", {
                         "packet_id": context.packet.id,
                         "vector_clock": context.vector_clock
-                    }, context.capability_flags | BIT_15)
+                    }, context.capability_flags | BIT(37))
                 CATCH blockchain_error
                     // Retry on alternative blockchain (e.g., Avalanche)
                     CALL log_event("ADTC_Anchoring_Retry", {
                         "packet_id": context.packet.id,
                         "vector_clock": context.vector_clock,
                         "fallback_blockchain": "Avalanche"
-                    }, context.capability_flags | BIT_15)
+                    }, context.capability_flags | BIT(37))
                 END TRY
                 RETURN True
             END IF
@@ -187,27 +187,27 @@ FUNCTION validate_adtc(context: ConsensusContext)
             // Use Lamport clocks for <=3 nodes
             IF COUNT(valid_votes) >= (2 * max_faulty_nodes + 1) THEN
                 CALL log_message("INFO", "ADTC consensus achieved for packet: " + context.packet.id + 
-                                 ", vector_clock: " + context.vector_clock, context.capability_flags | BIT_15)
+                                 ", vector_clock: " + context.vector_clock, context.capability_flags | BIT(37))
                 // Attempt blockchain anchoring with fallback
                 TRY
                     CALL log_event("ADTC_Anchoring", {
                         "packet_id": context.packet.id,
                         "vector_clock": context.vector_clock
-                    }, context.capability_flags | BIT_15)
+                    }, context.capability_flags | BIT(37))
                 CATCH blockchain_error
                     // Retry on alternative blockchain (e.g., Avalanche)
                     CALL log_event("ADTC_Anchoring_Retry", {
                         "packet_id": context.packet.id,
                         "vector_clock": context.vector_clock,
                         "fallback_blockchain": "Avalanche"
-                    }, context.capability_flags | BIT_15)
+                    }, context.capability_flags | BIT(37))
                 END TRY
                 RETURN True
             END IF
         END IF
         RAISE ConsensusError("ADTC consensus failed")
     CATCH error
-        CALL log_message("ERROR", "ADTC validation failed: " + error, context.capability_flags | BIT_15) // Log as Tier 1
+        CALL log_message("ERROR", "ADTC validation failed: " + error, context.capability_flags | BIT(37)) // Log as Tier 1
         RAISE error
     END TRY
 END FUNCTION
@@ -219,7 +219,7 @@ FUNCTION store_vote_locally(vote, max_persistence)
         CALL store_local_log(vote, expiration=max_persistence)
         CALL log_message("INFO", "Vote stored locally for persistence: " + vote.node_id, capability_flags)
     CATCH storage_error
-        CALL log_message("ERROR", "Failed to store vote locally: " + storage_error, capability_flags | BIT_15) // Log as Tier 1
+        CALL log_message("ERROR", "Failed to store vote locally: " + storage_error, context.capability_flags | BIT(37)) // Log as Tier 1
         RAISE storage_error
     END TRY
 END FUNCTION
@@ -230,7 +230,7 @@ FUNCTION propose_route(packet, nodes, consensus_mode)
         context = NEW ConsensusContext(packet, nodes, consensus_mode)
         RETURN validate_packet(context)
     CATCH error
-        CALL log_message("ERROR", "Route proposal failed: " + error, capability_flags | BIT_15) // Log as Tier 1
+        CALL log_message("ERROR", "Route proposal failed: " + error, context.capability_flags | BIT(37)) // Log as Tier 1
         RAISE error
     END TRY
 END FUNCTION
@@ -240,7 +240,7 @@ FUNCTION commit_packet(packet, nodes, consensus_mode)
     TRY
         context = NEW ConsensusContext(packet, nodes, consensus_mode)
         IF validate_packet(context) THEN
-            CALL log_message("INFO", "Packet committed: " + packet.id, capability_flags | BIT_15)
+            CALL log_message("INFO", "Packet committed: " + packet.id, context.capability_flags | BIT(37))
             IF consensus_mode == constants.A DTC_CONSENSUS_CODE THEN
                 // Periodic anchoring for long-term missions
                 IF MISSION_DURATION > 6_MONTHS AND IS_PERIHELION_WINDOW() THEN
@@ -248,14 +248,14 @@ FUNCTION commit_packet(packet, nodes, consensus_mode)
                         CALL log_event("ADTC_Anchoring", {
                             "packet_id": packet.id,
                             "vector_clock": context.vector_clock
-                        }, capability_flags | BIT_15)
+                        }, context.capability_flags | BIT(37))
                     CATCH blockchain_error
                         // Retry on alternative blockchain (e.g., Avalanche)
                         CALL log_event("ADTC_Anchoring_Retry", {
                             "packet_id": packet.id,
                             "vector_clock": context.vector_clock,
                             "fallback_blockchain": "Avalanche"
-                        }, capability_flags | BIT_15)
+                        }, context.capability_flags | BIT(37))
                     END TRY
                 END IF
             END IF
@@ -263,7 +263,7 @@ FUNCTION commit_packet(packet, nodes, consensus_mode)
         END IF
         RAISE ConsensusError("Commit failed")
     CATCH error
-        CALL log_message("ERROR", "Packet commit failed: " + error, capability_flags | BIT_15) // Log as Tier 1
+        CALL log_message("ERROR", "Packet commit failed: " + error, context.capability_flags | BIT(37)) // Log as Tier 1
         RAISE error
     END TRY
 END FUNCTION
@@ -273,11 +273,11 @@ END FUNCTION
 
 ## Notes
 - Consensus Modes: Supports PoS (low-priority), PBFT (high-priority), and ADTC (interplanetary, high-latency) via consensus_mode.
-- ADTC Features: Uses vector clocks for >3 nodes, Lamport clocks for ≤3 nodes, weighted votes (uptime, success rate, solar exposure), and a dynamic timeout (adjusted based on RTT estimates, default 30 minutes). Tolerates f faulty nodes in a 3f+1 network. Buffering persists votes locally during prolonged outages, with periodic checkpointing and opportunistic blockchain anchoring (Solana primary, Avalanche fallback).
-- Capability Flags: ADTC requires Bit 28 and Interplanetary Profile (Bits 20-21 = 10). Bits 28–31 reserved for interplanetary features.
+- ADTC Features:  Uses vector clocks for >3 nodes, Lamport clocks for ≤3 nodes, weighted votes (uptime, success rate, solar exposure), and a dynamic timeout (adjusted based on RTT estimates, default 30 minutes). Tolerates f faulty nodes in a 3f+1 network. Buffering persists votes locally during prolonged outages, with periodic checkpointing and opportunistic blockchain anchoring (Solana primary, Avalanche fallback).
+- Capability Flags: ADTC requires Bit 40 (interplanetary mode) and specific bits for consensus features (see /protocol-specs/capability_flags.md). Bits 40–43 are reserved for interplanetary and consensus-related features.
 - Performance: Minimizes communication overhead by buffering votes, optimized for sparse networks. Dynamic timeout adjustments reduce consensus delays in variable RTT conditions.
-- Security: Uses Schnorr or Dilithium signatures for vote authenticity, logged as Tier 1 events.
-- Edge Cases: Handles node failures, delayed votes, clock overflows, and connectivity outages, falling back to PoS if ADTC is unsupported. Robust buffering ensures vote persistence during prolonged interplanetary outages.
+- Security: Uses Schnorr or Dilithium signatures (Bit 39) for vote authenticity, logged as Tier 1 events (Bit 37).
+- Edge Cases:  Handles node failures, delayed votes, clock overflows, and connectivity outages, falling back to PoS if ADTC is unsupported. Robust buffering ensures vote persistence during prolonged interplanetary outages.
 - On-Chain Anchoring: Anchors cumulative ADTC states to Solana (or Avalanche fallback) during perihelion windows for missions >6 months, with retries for failed transactions.
 
 ## TODO
@@ -285,3 +285,4 @@ END FUNCTION
 - Implement predictive RTT modeling for more accurate timeout adjustments.
 - Add cross-blockchain retry policies for enhanced anchoring resilience.
 - Integrate with MeshGuardian ML Hub for predictive vote prioritization.
+- Map legacy 32-bit flags (e.g., BIT_28 for interplanetary mode) to the 64-bit structure or deprecate them.

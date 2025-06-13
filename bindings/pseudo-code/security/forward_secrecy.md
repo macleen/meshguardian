@@ -17,6 +17,7 @@ The Forward Secrecy Module ensures that session keys are generated securely such
 - **/pseudo-code/crypto/random.md**: Generates cryptographically secure random keys.  
 - **/pseudo-code/exceptions/security_errors.md**: Manages key exchange/derivation errors.  
 - **/pseudo-code/logging/logger.md**: Logs key operations and errors for traceability.  
+- **/pseudo-code/shared/constants.md**: Defines constants for capability flag bit positions.
 
 ## Called By
 - **/pseudo-code/security/auth.md**: Establishes ephemeral sessions during authentication.  
@@ -29,6 +30,8 @@ The Forward Secrecy Module ensures that session keys are generated securely such
 
 ## Pseudocode
 ```pseudocode
+// Assuming capability_flags is available in the current context or passed as needed
+
 // Function to validate Curve25519 key
 FUNCTION validate_curve25519_key(key, is_private)
     IF key IS NULL OR key IS EMPTY THEN
@@ -55,7 +58,8 @@ FUNCTION generate_ephemeral_keypair()
         CALL validate_curve25519_key(public_key, FALSE)
         RETURN { "private": private_key, "public": public_key }
     CATCH key_error
-        CALL log_message("ERROR", "Failed to generate keypair: " + key_error, capability_flags | BIT 15)  // Log as Tier 1
+        // Assuming capability_flags is available in the context
+        CALL log_message("ERROR", "Failed to generate keypair: " + key_error, capability_flags | LOG_TIER_1_FLAG)  // Log as Tier 1
         RAISE KeyError("Keypair generation failed: " + key_error)
     END TRY
 END FUNCTION
@@ -71,7 +75,8 @@ FUNCTION derive_shared_secret(own_private_key, peer_public_key)
         END IF
         RETURN shared_secret
     CATCH ecdh_error
-        CALL log_message("ERROR", "ECDH failed: " + ecdh_error, capability_flags | BIT 15)  // Log as Tier 1
+        // Assuming capability_flags is available in the context
+        CALL log_message("ERROR", "ECDH failed: " + ecdh_error, capability_flags | LOG_TIER_1_FLAG)  // Log as Tier 1
         RAISE KeyError("Shared secret derivation failed: " + ecdh_error)
     END TRY
 END FUNCTION
@@ -81,14 +86,15 @@ FUNCTION derive_session_key(shared_secret, context_info, packet)
     IF shared_secret IS NULL OR shared_secret IS EMPTY THEN
         RAISE KeyError("Shared secret is null or empty")
     END IF
-    // Select protocol based on capability flags
-    IF packet.capability_flags BIT 13 THEN
+    // Select protocol based on capability flags (64-bit integer)
+    IF packet.capability_flags & ML_PROTOCOL_SELECTION_BIT THEN
         protocol = CALL select_protocol_ml(context_info.network_metrics)
     ELSE
         protocol = CALL select_protocol_static(context_info.network_metrics)
     END IF
     TRY
-        session_key = HKDF(shared_secret, context_info || "meshguardian_session_" || session_id || protocol)
+        // Assuming session_id is part of context_info
+        session_key = HKDF(shared_secret, context_info || "meshguardian_session_" || context_info.session_id || protocol)
         IF session_key IS NULL OR session_key IS EMPTY THEN
             RAISE KeyError("Failed to derive session key")
         END IF
@@ -96,10 +102,10 @@ FUNCTION derive_session_key(shared_secret, context_info, packet)
             RAISE KeyError("Invalid session key length: expected 32 bytes")
         END IF
         STORE_SESSION_KEY(context_info.session_id, session_key)
-        CALL log_message("INFO", "Session key derived for session: " + session_id + " with protocol: " + protocol, capability_flags)
+        CALL log_message("INFO", "Session key derived for session: " + context_info.session_id + " with protocol: " + protocol, packet.capability_flags)
         RETURN session_key
     CATCH hkdf_error
-        CALL log_message("ERROR", "Session key derivation failed: " + hkdf_error, capability_flags | BIT 15)  // Log as Tier 1
+        CALL log_message("ERROR", "Session key derivation failed: " + hkdf_error, packet.capability_flags | LOG_TIER_1_FLAG)  // Log as Tier 1
         RAISE KeyError("Session key derivation failed: " + hkdf_error)
     END TRY
 END FUNCTION
@@ -121,11 +127,11 @@ FUNCTION check_rekeying_conditions(session, packet)
     IF session.duration > MAX_SESSION_TIME OR session.bytes_encrypted > REKEY_BYTES_LIMIT THEN
         CALL initiate_rekeying(session)
     END IF
-    IF packet.capability_flags BIT 14 THEN
+    IF packet.capability_flags & ML_FAILURE_PREDICTION_BIT THEN
         failure_predicted = CALL predict_failure_ml(session.node.battery, session.node.uptime, session.node.rssi_trend)
         IF failure_predicted THEN
             CALL initiate_rekeying(session)
-            CALL log_message("INFO", "Rekeying triggered due to ML-predicted failure for session: " + session.id, capability_flags)
+            CALL log_message("INFO", "Rekeying triggered due to ML-predicted failure for session: " + session.id, packet.capability_flags)
         END IF
     END IF
 END FUNCTION
@@ -141,7 +147,7 @@ FUNCTION rotate_group_key(group_id)
         BROADCAST_KEY_UPDATE(group_id)
         CALL log_message("INFO", "Group key rotated for group: " + group_id, capability_flags)
     CATCH key_error
-        CALL log_message("ERROR", "Group key rotation failed: " + key_error, capability_flags | BIT 15)  // Log as Tier 1
+        CALL log_message("ERROR", "Group key rotation failed: " + key_error, capability_flags | LOG_TIER_1_FLAG)  // Log as Tier 1
         RAISE KeyError("Group key rotation failed: " + key_error)
     END TRY
 END FUNCTION
@@ -158,13 +164,14 @@ END FUNCTION
 ## Notes:
 - Ephemeral Key Generation: Uses Curve25519 for high-security, efficient keypairs, with validation to ensure key integrity.
 - Key Derivation: HKDF with unique context strings prevents key reuse, with error handling for derivation failures.
-- Session Key Rotation: Rekeying triggered by time (MAX_SESSION_TIME) or data (REKEY_BYTES_LIMIT), with ML-driven triggers (Bit 14).
+- Session Key Rotation: Rekeying triggered by time (MAX_SESSION_TIME) or data (REKEY_BYTES_LIMIT), with ML-driven triggers (e.g., ML_FAILURE_PREDICTION_BIT).
 - Secure Deletion: Keys are zeroed out using SECURE_ERASE, with checks for key existence to prevent errors.
 - **Mesh-Specific Features**:
     -- Group key rotation via TreeKEM ensures forward secrecy in group chats.
     -- Message queuing supports asynchronous communication for offline nodes.
 - Error Handling: Validates keys for format and integrity, raising KeyError for invalid keys, with logging via logger.md for traceability.
 - Forward Secrecy: Past traffic remains secure even if long-term keys are compromised.
+- 64-bit Capability Flags: The capability_flags field is now a 64-bit integer. Bit positions are defined in /pseudo-code/shared/constants.md for flexibility and maintainability. Refer to protocol-specs/capability_flags.md for the full specification.  
 
 ## TODO:
 - Add session timeout enforcement.

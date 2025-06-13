@@ -3,6 +3,8 @@
 ## Background
 In MeshGuardian, a **packet** is a data unit sent between nodes (e.g., IoT sensors, crisis radios, 4.1.3, 5.15), like a message in a delivery network. Packets carry a unique ID (tracking number), source (sender), destination (receiver), data (content), and headers (instructions, e.g., urgency). The Core Networking module enables resilient communication in disconnected environments (e.g., war zones, 5.15; rural IoT, 5.14) using Delay-Tolerant Networking (DTN, 4.1.5), Trust Graphs (4.1.2) for secure routing, and protocol-agnostic transports (LoRa, Zigbee, 4.1.1). This file defines packet creation, foundational for blockchain logging (5.11), telehealth (5.12), and emergency messaging (5.16), serving as a blueprint for developers.
 
+**Note**: The MeshGuardian system has transitioned to a 64-bit capability flag architecture, expanding the feature set for future protocol enhancements. While this pseudocode remains unchanged, contributors should refer to `protocol-specs/capability_flags.md` for details on the updated system.
+
 ## Purpose
 Defines the `PacketCreator` class for initializing packet attributes, the `Packet.create` method for orchestrating creation, and the `PacketHeaders` class for header metadata. Ensures robust packet formation, supporting MeshGuardian’s crisis and IoT goals.
 
@@ -236,9 +238,6 @@ CLASS Packet
   - Headers: /pseudo-code/protocol/profiles.md.  
   - Logging: /pseudo-code/audit/audit_trail.md.  
   - Errors: /pseudo-code/exceptions/networking_errors.md, /pseudo-code/exceptions/base_exception.md.  
-- **Python Learning**:  
-  - `Dictionary` is the data container.  
-- **Future Python**: This folder may become a Python package with `__init__.py`, grouping modules.
 
 ## Contributor Guide
 This file is a pseudocode blueprint for packet creation. Contribute by refining it to guide future implementations. See /pseudo-code/CONTRIBUTING.md for PR guidelines.

@@ -3,6 +3,8 @@
 ## Background
 Errors in MeshGuardian signal issues across modules (networking, security, 4.1.4, 4.1.1), ensuring robust communication for IoT (4.1.3), crisis response (5.15, 5.16), and blockchain logging (5.11). The `BaseException` class is the parent for all errors, providing common attributes (e.g., message, timestamp). This file defines the foundation for errors, reusable across modules (e.g., /pseudo-code/networking/, /pseudo-code/protocol/), serving as a blueprint for developers.
 
+**Note**: This class is independent of specific protocol configurations like capability flags. However, errors extending this class may be influenced by flags such as Low-Energy Mode (Bit 23) or interplanetary communication (Bit 40) in the 64-bit system. See `protocol-specs/capability_flags.md` for details.
+
 ## Purpose
 Defines the `BaseException` class as the parent for all MeshGuardian errors, ensuring consistent error handling.
 
@@ -52,20 +54,3 @@ CLASS BaseException
         //     - For C++ devs: Like std::exception with custom fields.
         self.message = message
         self.timestamp = CALL get_current_timestamp()  // e.g., Unix epoch
-```
-
----
-
-## Notes
-- Single Responsibility: Provides shared error attributes (message, timestamp).
-- Extensibility: Errors extend BaseException, e.g., /pseudo-code/exceptions/networking_errors.md, future /pseudo-code/exceptions/protocol_errors.md.
-- Reusability: Used by all modules.
-- Edge Cases: Ensures timestamp for logging (5.11, 5.16).
-- Dependencies: None, foundational for errors.
-
-## Contributor Guide
-- Understand Errors: Read Background, Used In (5.11–5.16).
-- Refine Pseudocode: Add attributes (e.g., code)? New methods?
-- Validate Design: Ensure simplicity, cover logging needs (5.11).
-- Document: Update front-matter, add comments.
-- Submit: Fork, commit (e.g., “Add code attribute”), PR to /pseudo-code/.

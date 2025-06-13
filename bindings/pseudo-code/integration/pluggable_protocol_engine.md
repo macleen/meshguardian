@@ -1,7 +1,7 @@
 # Pluggable Protocol Engine Module
 
 ## Purpose
-The Pluggable Protocol Engine module provides a modular framework for integrating and managing custom communication protocol plugins within the MeshGuardian system. It enables seamless adaptation to diverse protocols (e.g., Bluetooth, LoRa, QUIC) by allowing plugins to be registered, validated, and applied dynamically. This module is essential for supporting varied use cases, from low-power IoT networks to high-performance crisis communication, ensuring flexibility and extensibility.
+The Pluggable Protocol Engine module provides a modular framework for integrating and managing custom communication protocol plugins within the MeshGuardian system. It enables seamless adaptation to diverse protocols (e.g., Bluetooth, LoRa, QUIC) by allowing plugins to be registered, validated, and applied dynamically. This module is essential for supporting varied use cases, from low-power IoT networks to high-performance crisis communication, ensuring flexibility and extensibility. With the transition to 64-bit capability flags, the module now supports an expanded feature set for future protocol enhancements.
 
 ## Interfaces
 - **register_protocol_plugin(plugin)**: Registers a new protocol plugin, validating its compatibility with the system.  
@@ -22,6 +22,7 @@ The Pluggable Protocol Engine module provides a modular framework for integratin
 ## Used In
 - **Use Case 5.15: Aid Relays**: Supports dynamic protocol plugins (e.g., LoRa for long-range, low-power communication) to ensure reliable supply tracking in crisis zones.  
 - **Use Case 5.16: Emergency Chat**: Enables plugins like Bluetooth for low-latency messaging in real-time disaster communication.  
+- **Future Use Cases**: New protocols (e.g., interplanetary communication) may leverage additional 64-bit flags (e.g., Bit 40).
 
 ## Pseudocode
 ```pseudo-code
@@ -41,12 +42,12 @@ FUNCTION validate_plugin_compatibility(plugin)
         IF NOT SATISFIES_REQUIREMENT(hardware_status, requirement)
             RAISE PluginCompatibilityError("Plugin incompatible with hardware: " + requirement)
     END FOR
-    // Check capability flag compatibility (e.g., Bit 18 for QUIC)
-    capability_flags = GET_DEVICE_CAPABILITY_FLAGS(device_id)
-    plugin_flags = GET_PLUGIN_CAPABILITY_FLAGS(plugin)
+    // Check 64-bit capability flag compatibility
+    capability_flags = GET_DEVICE_CAPABILITY_FLAGS(device_id)  // Returns a 64-bit integer
+    plugin_flags = GET_PLUGIN_CAPABILITY_FLAGS(plugin)  // List of required flag positions
     FOR flag IN plugin_flags
-        IF flag NOT IN capability_flags
-            RAISE PluginCompatibilityError("Plugin requires unsupported capability flag: " + flag)
+        IF NOT (capability_flags & (1 << flag))
+            RAISE PluginCompatibilityError("Plugin requires unsupported capability flag: Bit " + flag)
     END FOR
     RETURN True
 END FUNCTION
@@ -103,12 +104,14 @@ END FUNCTION
 ---
 
 ## Notes
-- Plugin Compatibility: Plugins must implement required interfaces (transmit, receive), be compatible with device hardware, and support enabled capability flags (e.g., Bit 18 for QUIC).  Validation ensures robustness in dynamic environments.
-- Performance: Plugin registration and validation add minimal overhead (<5ms), with efficient storage and retrieval of plugins. Applying plugins leverages hardware acceleration when available (e.g., via hardware_interface.md).
-- Scalability: Supports dynamic addition and removal of plugins, enabling adaptation to new protocols without system downtime.
-- Security: Plugin validation prevents unauthorized or malicious plugins by checking cryptographic identities (via /pseudo-code/crypto/identity.md).
-- Error Handling: Robustly handles incompatible plugins, missing interfaces, or hardware mismatches with specific errors (PluginCompatibilityError).
+- Plugin Compatibility: Plugins must implement required interfaces (transmit, receive), be compatible with device hardware, and support enabled capability flags, now managed as 64-bit integers (e.g., Bit 18 for QUIC, potentially shifted in the new scheme). Validation ensures robustness in dynamic environments.  
+- Performance: Plugin registration and validation add minimal overhead (<5ms), with efficient storage and retrieval of plugins. Applying plugins leverages hardware acceleration when available (e.g., via hardware_interface.md).  
+- Scalability: Supports dynamic addition and removal of plugins, enabling adaptation to new protocols without system downtime. The 64-bit flag expansion enhances future scalability.  
+- Security: Plugin validation prevents unauthorized or malicious plugins by checking cryptographic identities (via /pseudo-code/crypto/identity.md).  
+- Error Handling: Robustly handles incompatible plugins, missing interfaces, or hardware mismatches with specific errors (PluginCompatibilityError), now updated to reference 64-bit flag positions (e.g., "Bit 40").  
+- Documentation: Capability flags are now 64-bit. Refer to /pseudo-code/protocol-specs/capability_flags.md for updated flag assignments.  
 
 ## TODO
 - Add support for plugin versioning to manage updates and backward compatibility. 
 - Implement plugin hot-swapping for seamless protocol transitions.
+- Verify new 64-bit flag assignments (e.g., QUIC, interplanetary mode) with the latest system specification.

@@ -22,7 +22,7 @@ FUNCTION validate_protocol_security(user_id, ip_address, session_state)
     # Check protocol version
     IF session_state.protocol_version < cached_config.protocol_version THEN
         CALL session_state.downgrade_attempts[user_id] += 1
-        CALL LOG_SECURITY_EVENT("Downgrade attempt: protocol version " + session_state.protocol_version, BIT_15 | BIT_16)
+        CALL LOG_SECURITY_EVENT("Downgrade attempt: protocol version " + session_state.protocol_version, constants.HIGH_SEVERITY_SECURITY_EVENT | constants.DOWNGRADE_ALERT)
         CALL broadcast_downgrade_alert(user_id, "Invalid protocol version")
         IF session_state.downgrade_attempts[user_id] >= DOWNGRADE_ATTEMPT_THRESHOLD THEN
             CALL LOCKOUT(ip_address, 1440)  # 24-hour lockout
@@ -34,7 +34,7 @@ FUNCTION validate_protocol_security(user_id, ip_address, session_state)
     # Check encryption algorithm
     IF session_state.encryption_algorithm NOT IN cached_config.encryption_algorithms OR session_state.encryption_strength < cached_config.min_encryption_strength THEN
         CALL session_state.downgrade_attempts[user_id] += 1
-        CALL LOG_SECURITY_EVENT("Downgrade attempt: weak encryption " + session_state.encryption_algorithm, BIT_15 | BIT_16)
+        CALL LOG_SECURITY_EVENT("Downgrade attempt: weak encryption " + session_state.encryption_algorithm, constants.HIGH_SEVERITY_SECURITY_EVENT | constants.DOWNGRADE_ALERT)
         CALL broadcast_downgrade_alert(user_id, "Weak encryption")
         IF session_state.downgrade_attempts[user_id] >= DOWNGRADE_ATTEMPT_THRESHOLD THEN
             CALL LOCKOUT(ip_address, 1440)
@@ -44,10 +44,10 @@ FUNCTION validate_protocol_security(user_id, ip_address, session_state)
     END IF
 
     # Check compression algorithm (if applicable)
-    IF session_state.capability_flags & BIT_4 THEN  # Chunked fragment
+    IF session_state.capability_flags & constants.CHUNKED_FRAGMENT_FLAG THEN  # Flag for chunked fragment
         IF session_state.compression_algorithm NOT IN cached_config.compression_algorithms THEN
             CALL session_state.downgrade_attempts[user_id] += 1
-            CALL LOG_SECURITY_EVENT("Downgrade attempt: weak compression " + session_state.compression_algorithm, BIT_15 | BIT_16)
+            CALL LOG_SECURITY_EVENT("Downgrade attempt: weak compression " + session_state.compression_algorithm, constants.HIGH_SEVERITY_SECURITY_EVENT | constants.DOWNGRADE_ALERT)
             CALL broadcast_downgrade_alert(user_id, "Weak compression")
             RETURN False
         END IF
@@ -56,14 +56,14 @@ FUNCTION validate_protocol_security(user_id, ip_address, session_state)
     # Check consensus mode
     IF session_state.consensus_mode NOT IN cached_config.allowed_consensus_modes THEN
         CALL session_state.downgrade_attempts[user_id] += 1
-        CALL LOG_SECURITY_EVENT("Downgrade attempt: invalid consensus mode " + session_state.consensus_mode, BIT_15 | BIT_16)
+        CALL LOG_SECURITY_EVENT("Downgrade attempt: invalid consensus mode " + session_state.consensus_mode, constants.HIGH_SEVERITY_SECURITY_EVENT | constants.DOWNGRADE_ALERT)
         CALL broadcast_downgrade_alert(user_id, "Invalid consensus mode")
         RETURN False
     END IF
 
     # Ensure secure negotiation flag
-    IF NOT (session_state.capability_flags & BIT_5) THEN
-        CALL LOG_SECURITY_EVENT("Missing secure negotiation flag", BIT_15)
+    IF NOT (session_state.capability_flags & constants.SECURE_NEGOTIATION_FLAG) THEN
+        CALL LOG_SECURITY_EVENT("Missing secure negotiation flag", constants.HIGH_SEVERITY_SECURITY_EVENT)
         RETURN False
     END IF
 
@@ -77,7 +77,7 @@ FUNCTION broadcast_downgrade_alert(user_id, reason)
         "type": "DowngradeAlert",
         "sender": user_id,
         "reason": reason,
-        "capability_flags": BIT_1 | BIT_16,  # Broadcast with downgrade alert flag
+        "capability_flags": constants.BROADCAST_FLAG | constants.DOWNGRADE_ALERT,  # Broadcast with downgrade alert flag
         "timestamp": get_current_timestamp(),
         "nonce": generate_unique_id()
     }
@@ -110,22 +110,24 @@ END FUNCTION
 
 ## Comparison to Standards
 
-- **TLS 1.3**: Uses strict protocol version validation to prevent downgrade attacks. MeshGuardian aligns by enforcing PROTOCOL_VERSION and rejecting outdated versions, with BIT_16 alerts for network awareness.
-- **WireGuard**: Employs secure algorithm negotiation and session-based counters. MeshGuardian’s capability flags (BIT_5, BIT_16) and encryption strength checks (MIN_ENCRYPTION_STRENGTH) provide similar protections.
-- **Signal Protocol**: Ensures secure key negotiation and resists protocol weakening. MeshGuardian’s enforcement of encryption algorithms (e.g., AES-256, Kyber) and compression whitelisting (e.g., zstd, lz4) mirrors this resilience.
+- TLS 1.3: Uses strict protocol version validation to prevent downgrade attacks. MeshGuardian aligns by enforcing PROTOCOL_VERSION and rejecting outdated versions, with constants.DOWNGRADE_ALERT alerts for network awareness.  
+- WireGuard: Employs secure algorithm negotiation and session-based counters. MeshGuardian’s capability flags (e.g., constants.  SECURE_NEGOTIATION_FLAG, constants.DOWNGRADE_ALERT) and encryption strength checks (MIN_ENCRYPTION_STRENGTH) provide similar protections.  
+- Signal Protocol: Ensures secure key negotiation and resists protocol weakening. MeshGuardian’s enforcement of encryption algorithms (e.g., AES-256, Kyber) and compression whitelisting (e.g., zstd, lz4) mirrors this resilience.
 
 ---
 
 ## Notes
 
-- Downgrade Attack Protection: Validates protocol version, encryption algorithms (e.g., AES-256, Kyber), compression algorithms (e.g., zstd, lz4), consensus modes (PoS, PBFT, ADTC), and secure negotiation flag (BIT_5) to prevent fallback to insecure configurations. Broadcasts alerts with BIT_16.
+- Downgrade Attack Protection: Validates protocol version, encryption algorithms (e.g., AES-256, Kyber), compression algorithms (e.g., zstd, lz4), consensus modes (PoS, PBFT, ADTC), and secure negotiation flag (constants.SECURE_NEGOTIATION_FLAG) to prevent fallback to insecure configurations. Broadcasts alerts with constants.DOWNGRADE_ALERT.
 - IP Lockout Mechanism: Locks out IPs after 3 downgrade attempts (DOWNGRADE_ATTEMPT_THRESHOLD), with a 24-hour duration, mitigating persistent attacks.
 - Secure Credential Storage: Enforces minimum encryption strength (MIN_ENCRYPTION_STRENGTH = 256 bits) during validation.
 - Optimization: Caches security configurations (cache_security_config) for low-power devices (e.g., Raspberry Pi Zero 2W, LoRa HATs, hardware_requirements.md), reducing lookup overhead.
 - Trust Graph Integration: Slashes malicious nodes with trust score decay (TRUST_DECAY_FACTOR = 0.1), preparing for adaptive trust models.
 - Glossary Terms:
     -- Downgrade Attack: A threat where a node is tricked into using a less secure protocol, cipher, or consensus method, exposing vulnerabilities.
-    -- BIT_5: Capability flag (0x10) indicating secure negotiation mode is enabled. Must be present in all protocol-compliant messages.
-    -- BIT_15: Capability flag (0x8000) indicating high-severity security events, used for Tier 1 audit logging (e.g., downgrade attempts).
-    -- BIT_16: Capability flag (0x10000) indicating a downgrade attempt broadcast to alert the network of potential attacks.
+    -- constants.SECURE_NEGOTIATION_FLAG: Capability flag indicating secure negotiation mode is enabled. Must be present in all protocol-compliant messages.
+    -- constants.HIGH_SEVERITY_SECURITY_EVENT: Capability flag indicating high-severity security events, used for Tier 1 audit logging (e.g., downgrade attempts).
+    -- constants.DOWNGRADE_ALERT: Capability flag indicating a downgrade attempt broadcast to alert the network of potential attacks.  
+
+- 64-bit Capability Flags: The capability_flags field is now a 64-bit integer. Bit positions are defined in /pseudo-code/shared/constants.md for flexibility and maintainability. Refer to protocol-specs/capability_flags.md for the full specification.  
 - Future Improvements: Add geo-based exceptions for trusted locations, integrate quantum-resistant signatures, and implement full trust graph scoring (get_trust_score, update_trust_score).

@@ -1,7 +1,7 @@
 # Pseudo-code: Packet Headers
 
 ## Purpose
-The PacketHeaders class encapsulates packet header attributes for consistency and extensibility in the MeshGuardian network. It defines and validates metadata such as TTL, profile, priority, capability flags, vector clocks, and consensus mode, supporting ML-driven protocol selection (Bit 13), failure prediction (Bit 14), blockchain audit logging (Bit 15), and Asynchronous Delay-Tolerant Consensus (ADTC) for interplanetary environments.
+The PacketHeaders class encapsulates packet header attributes for consistency and extensibility in the MeshGuardian network. It defines and validates metadata such as TTL, profile, priority, capability flags, vector clocks, and consensus mode. This supports features like ML-driven protocol selection, failure prediction, blockchain audit logging, and Asynchronous Delay-Tolerant Consensus (ADTC) for interplanetary environments. The class has been updated to use 64-bit capability flags to accommodate an expanded feature set.
 
 
 ## Interfaces
@@ -35,7 +35,7 @@ CLASS PacketHeaders
     ttl: Integer      // Time-to-live in seconds
     profile: String   // Communication profile
     priority: String  // Priority level
-    capability_flags: Integer  // 32-bit capability flags
+    capability_flags: u64  // 64-bit capability flags
     vector_clock: MAP[NodeID, INTEGER]  // Vector clock for ADTC
     consensus_mode: Integer  // Consensus mode (e.g., ADTC_CONSENSUS_CODE)
 
@@ -47,24 +47,26 @@ CLASS PacketHeaders
         self.profile = profile
         self.ttl = CALL get_ttl(profile)
         self.priority = CALL get_priority(profile)
-        self.capability_flags = CALL get_capability_flags()
+        // Initialize capability flags as a 64-bit integer
+        self.capability_flags = CALL get_capability_flags()  // Returns a 64-bit integer
+        // Set specific bits based on node capabilities (updated for 64-bit system)
         IF CALL node_supports_ml_protocol_selection() THEN
-            SET self.capability_flags BIT_13 TO 1
+            SET self.capability_flags BIT 22 TO 1  // Updated position
         ELSE
-            SET self.capability_flags BIT_13 TO 0
+            SET self.capability_flags BIT 22 TO 0
         END IF
         IF CALL node_supports_ml_failure_prediction() THEN
-            SET self.capability_flags BIT_14 TO 1
+            SET self.capability_flags BIT 14 TO 1  // Retained position (example)
         ELSE
-            SET self.capability_flags BIT_14 TO 0
+            SET self.capability_flags BIT 14 TO 0
         END IF
         IF CALL node_supports_adtc() THEN
-            SET self.capability_flags BIT_28 TO 1
+            SET self.capability_flags BIT 40 TO 1  // Updated position for interplanetary mode
         ELSE
-            SET self.capability_flags BIT_28 TO 0
+            SET self.capability_flags BIT 40 TO 0
         END IF
         self.vector_clock = {}
-        IF profile = "interplanetary" THEN
+        IF profile == "interplanetary" THEN
             self.vector_clock[CURRENT_NODE_ID] = CALL helpers.increment_lamport_clock(0)
             self.consensus_mode = constants.A DTC_CONSENSUS_CODE
         ELSE
@@ -103,12 +105,15 @@ END CLASS
 ---
 
 ## Notes
-- Role: Ensures consistent packet metadata, including vector clocks and consensus mode for ADTC.
-- ADTC Support: Initializes vector clock and sets ADTC_CONSENSUS_CODE for interplanetary profiles.
-- Capability Flags: Supports ML (Bits 13, 14) and ADTC (Bit 28). Bits 28–31 reserved for interplanetary features.
-- Logging: Logs header initialization, using Tier 1 for ADTC headers if Bit 15 = 1.
+- Role: Ensures consistent packet metadata, including vector clocks and consensus mode for ADTC.  
+- ADTC Support: Initializes vector clock and sets ADTC_CONSENSUS_CODE for interplanetary profiles.  
+- Capability Flags: Supports ML (e.g., Bits 22, 14) and interplanetary mode (e.g., Bit 40). Bits 40–63 are reserved for future features.  
+- Logging: Logs header initialization, using Tier 1 (e.g., blockchain) if the corresponding flag (e.g., Bit 37) is set.  
+- 64-Bit Transition: Updated to use 64-bit capability flags. Refer to protocol-specs/capability_flags.md for exact bit assignments.  
+
 
 ## TODO
 - Add validation for header fields.
 - Optimize vector clock storage for low-memory devices.
 - Support dynamic updates to consensus mode.
+- Confirm exact bit positions with the latest MeshGuardian specification.

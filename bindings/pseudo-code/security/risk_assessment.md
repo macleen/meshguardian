@@ -18,8 +18,8 @@ The Risk Assessment module dynamically evaluates security risks within the MeshG
 - **/pseudo-code/audit/audit_trail.md**: Logs risk assessment actions and anomalies.  
 
 ## Called By
-- **/pseudo-code/security/rate_limiting.md**: Uses risk scores to adjust rate limits dynamically.  
-- **/pseudo-code/security/auth.md**: Incorporates risk assessments into authentication decisions.  
+- **/pseudo-code/security/rate_limiting.md**: Uses risk scores to adjust rate limits dynamically.
+- **/pseudo-code/security/auth.md**: Incorporates risk assessments into authentication decisions.
 
 ## Used In
 - **Use Case 5.15: Aid Relays**: Assesses risks for authentication attempts in crisis zones to prevent unauthorized access.  
@@ -72,14 +72,13 @@ FUNCTION calculate_risk_score(profile, behavior_data, packet)
         score = SIMPLE_HEURISTIC_SCORE(behavior_data)
         factors = SIMPLE_RISK_FACTORS(behavior_data)
     ELSE
-        IF packet.capability_flags BIT 14
-            // ML-driven risk assessment
+        // Check if ML-driven risk assessment is enabled (64-bit flag)
+        IF packet.capability_flags & ML_RISK_ASSESSMENT_FLAG THEN
             model = LOAD_TINYML_MODEL("risk_assessment")
             input_data = [behavior_data.auth_attempts, behavior_data.geo_anomalies, behavior_data.packet_rate]
             score = model.predict(input_data)
             factors = EXTRACT_RISK_FACTORS(model, input_data)
         ELSE
-            // Heuristic risk assessment
             score = SIMPLE_HEURISTIC_SCORE(behavior_data)
             factors = SIMPLE_RISK_FACTORS(behavior_data)
         END IF
@@ -90,9 +89,12 @@ FUNCTION calculate_risk_score(profile, behavior_data, packet)
 ---
 
 ## Notes
-- **Dynamic Assessment**: Risk scores adapt to real-time data (e.g., login frequency, geographic anomalies).  
-- **Scalability**: Lightweight scoring for constrained nodes ensures performance in mesh networks.  
-- **Security**: Encrypted profiles and input validation prevent tampering and data poisoning.  
-- **Compliance**: Aligns with NIST IR 8228, ISO 31000, and GDPR Art. 35 for risk management.  
-- **TODO**: Integrate federated learning for cross-node risk correlation.  
-- **TODO**: Add threat intelligence feed integration for enhanced risk assessment.  
+- Dynamic Assessment: Risk scores adapt to real-time data (e.g., login frequency, geographic anomalies).  
+- Scalability: Lightweight scoring for constrained nodes ensures performance in mesh networks.  
+- Security: Encrypted profiles and input validation prevent tampering and data poisoning.  
+- Compliance: Aligns with NIST IR 8228, ISO 31000, and GDPR Art. 35 for risk management.  
+- 64-bit Capability Flags Transition: This module has been updated to support 64-bit capability flags. The packet.capability_flags field is now a 64-bit integer, and hardcoded bit positions (e.g., BIT 14) have been replaced with symbolic constants (e.g., ML_RISK_ASSESSMENT_FLAG) defined in /pseudo-code/shared/constants.md. Ensure that all bitwise operations are compatible with 64-bit integers.
+
+## TODO: 
+- Integrate federated learning for cross-node risk correlation.
+- Add threat intelligence feed integration for enhanced risk assessment.

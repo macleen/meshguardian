@@ -8,7 +8,7 @@ assignees: ''
 
 ## Feature Request
 
-Thank you for suggesting a feature for MeshGuardian! Please provide a clear and detailed proposal to help us understand your idea and its impact on our decentralized, resilient mesh networking protocol for terrestrial and interplanetary scenarios. Refer to our [CONTRIBUTING.md](../CONTRIBUTING.md) and [Code of Conduct](../CODE_OF_CONDUCT.md) for guidelines.
+Thank you for suggesting a feature for MeshGuardian! Please provide a clear and detailed proposal to help us understand your idea and its impact on our decentralized, resilient mesh networking protocol for terrestrial and interplanetary scenarios. Refer to our [CONTRIBUTING.md](../CONTRIBUTING.md), [Code of Conduct](../CODE_OF_CONDUCT.md), and full documentation at [https://meshguardian.com/docs](https://meshguardian.com/docs) for guidelines.
 
 ### Feature Title
 Provide a concise, descriptive title for the feature.
@@ -36,20 +36,23 @@ Outline any technical details or constraints, such as:
 - Impact on existing features (e.g., consensus in `pbft_validation.md`, multi-blockchain logging in `audit_trail.md`, slashing logic in `pos_validation.md`).
 - Dependencies or new modules needed (e.g., updates to `constants.md`).
 - Potential challenges (e.g., compatibility with low-power devices, interplanetary latency).
+- Alignment with the 64-bit capability flags structure (e.g., Bit 39 for Quantum Mode, Bit 36 for extended compression; see `protocol-specs/capability_flags.md`).
 
 **Example**: 
 - QUIC requires a 32 MHz CPU and 64 KB RAM, suitable for moderate-capability devices (Device Capability Level 1).
 - May need a new protocol ID in `constants.md` and integration with the Pluggable Protocol Engine in `bindings/pseudo-code/networking/`.
-- Challenges include ensuring QUIC’s encryption aligns with post-quantum signatures (Bit 4) and maintaining low-power compatibility.
+- Challenges include ensuring QUIC’s encryption aligns with post-quantum cryptography (Bit 39, QUANTUM_FLAG) and maintaining compatibility with Low-Energy Mode (Bit 24) for low-power devices.
+- Consider impact on multi-blockchain logging (Bit 37) for audit trail enhancements.
 
 ### References
 Link to relevant documentation or issues:
-- Project files (e.g., `bindings/pseudo-code/adaptive_protocol_selection.md`, `docs/space_and_interplanetary_communication.blade.php`).
+- Project files (e.g., `bindings/pseudo-code/adaptive_protocol_selection.md`, `docs/space_and_interplanetary_communication.blade.php`, `protocol-specs/capability_flags.md`).
 - Related issues or pull requests (e.g., #123).
 - External resources (e.g., QUIC specification, TinyML research).
 
 **Example**: 
 - See `bindings/pseudo-code/adaptive_protocol_selection.md` for protocol selection criteria.
+- See `protocol-specs/capability_flags.md` for 64-bit capability flags assignments.
 - Related to #456 (TinyML optimization for protocol selection).
 - QUIC specification: https://datatracker.ietf.org/doc/html/rfc9000
 

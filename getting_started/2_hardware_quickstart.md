@@ -11,12 +11,12 @@ This guide walks you through assembling a basic MeshGuardian node using a **Rasp
 | Single Board Computer    | Raspberry Pi 3/4 or STM32WL55        |
 | Wireless Module (LoRa)   | Dragino LoRa HAT / EByte E22 / SX1262 |
 | GPS Module               | u-blox M10 or M8                    |
-| Power Supply             | 5V 2.5A adapter / Battery Pack       |
+| Power Supply             | 5V 2.5A adapter / Battery Pack (supports Bit 23 Low-Energy Mode) |
 | SD Card (min. 8GB)       | Class 10 or better                   |
 | Antenna (LoRa + GPS)     | 868/915 MHz + passive GPS patch     |
 | Optional Case            | Weatherproof enclosure               |
 
-> 💡 Tip: For outdoor testing, use solar + battery combo with a charge controller.
+> 💡 Tip: For outdoor testing, use solar + battery combo with a charge controller to support Low-Energy Mode (Bit 23).
 
 ---
 
@@ -65,6 +65,9 @@ Clone and set up:
     cd meshguardian
     sudo ./install.sh
 ```
+
+Configure 64-bit capability flags in config.py to enable features like Low-Energy Mode (Bit 23) or post-quantum cryptography (Bit 39; see /protocol-specs/capability_flags.md).
+
 🧠 Refer to /hardware/4_software_implementation.md for detailed firmware setup.
 
 
@@ -74,14 +77,18 @@ Run diagnostics:
     python3 tools/ping_mesh.py
 ```
 Expected Output:
-```output
-    ✔ LoRa module detected
-    ✔ GPS lock acquired
-    ✔ Encrypted packet test: OK
+```output  
+    ✔ LoRa module detected  
+    ✔ GPS lock acquired  
+    ✔ Encrypted packet test: OK  
+    ✔ Low-Energy Mode (Bit 23): OK
 ```
 ## Next Steps
-- Secure Your Node
-- Test RF Performance
-- Contribute to Hardware Layer
+- Secure Your Node: Configure encryption and authentication settings.
+- Test RF Performance: Validate LoRa and GPS with /hardware/9_RF_validation_procedure.md.
+- Contribute to Hardware Layer: See /CONTRIBUTING.md.
+- Software-Hardware Alignment: Ensure 64-bit capability flags in config.py match hardware capabilities (e.g., Bit 23 for battery-powered setups).  
 
-**Need help?** Open a GitHub issue or check our community chat.
+--
+
+**Need help?** Open a GitHub issue at https://github.com/macleen/meshguardian/issues or check our community chat.

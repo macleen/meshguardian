@@ -62,8 +62,7 @@ For LoRa or similar modules, run:
 Follow any additional setup steps in the module’s documentation.
 
 Set Parameters  
-Configure frequency bands, power levels, and regional compliance settings.  
-This may involve editing configuration files or running setup scripts.  
+Configure frequency bands, power levels, and regional compliance settings. These may interact with protocol settings defined by 64-bit capability flags (e.g., Bit 21 for TCPCLv4; see protocol-specs/capability_flags.md). This may involve editing configuration files or running setup scripts.  
 
 ## 5. Install MeshGuardian Software
 Clone the Repository  
@@ -77,9 +76,9 @@ Install Dependencies
     pip3 install -r requirements.txt
 ```
 Configure the Software  
-Edit the configuration files to match your hardware setup and network   environment.  
-  
-Follow guidance in the /pseudo-code/ folder for protocol, security, and device logic.
+Edit config.py to match your hardware setup and network environment. Configure 64-bit capability flags to enable features like Low-Energy Mode (Bit 23), extended compression (Bit 36), or post-quantum cryptography (Bit 39; see protocol-specs/capability_flags.md for details).
+
+Follow guidance in the /pseudo-code/ folder (e.g., bindings/pseudo-code/networking/packet_creation.md) for protocol, security, and device logic.
 
 ## 6. Set Up Auto-Start (Optional)
 Enable on Boot  

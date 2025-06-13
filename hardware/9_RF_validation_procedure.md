@@ -9,7 +9,8 @@ This document outlines the procedure for validating the RF performance of the Me
 - Spectrum Analyzer / VNA (Vector Network Analyzer)  
 - LoRa Tester (e.g., LoRaWAN gateway or dedicated tester)  
 - GPS Simulator or access to open-sky environment  
-- Power Supply (3.3V ±5%)
+- Power Supply (3.3V ±5%)  
+- Firmware configured with relevant 64-bit capability flags (e.g., Bit 23 for Low-Energy Mode; see `protocol-specs/capability_flags.md`)
 
 ---
 
@@ -29,6 +30,7 @@ This document outlines the procedure for validating the RF performance of the Me
 
 - Transmit LoRa packets using:
   - **Spreading Factor (SF7)** and **125 kHz** bandwidth
+  - Firmware configured with relevant 64-bit capability flags (e.g., Bit 36 for extended compression, Bit 39 for post-quantum cryptography; see `protocol-specs/capability_flags.md`) to reflect deployment settings.
 - **Verify**:
   - Packet Error Rate (PER): Should be **<1%** at max range.
   - RSSI/SNR: Compare against reference design expectations.
@@ -73,6 +75,18 @@ This document outlines the procedure for validating the RF performance of the Me
 
 ---
 
+## 4. Software-Hardware Alignment
+
+Validate RF performance under different 64-bit capability flag configurations to ensure hardware supports protocol features, such as:
+- **Low-Energy Mode (Bit 23)**: Optimizes power during transmission.
+- **Extended Compression (Bit 36)**: Increases packet size, potentially affecting PER or range.
+- **Post-Quantum Cryptography (Bit 39)**: Adds computational overhead, possibly impacting timing.
+- **Multi-Blockchain Logging (Bit 37)**: Requires stable RF for audit trail sync.
+
+See `protocol-specs/capability_flags.md` for flag definitions and test with varied flag settings to confirm compatibility.
+
+---
+
 ## Pass/Fail Criteria
 
 | Test                      | Target Value             |
@@ -89,11 +103,20 @@ This document outlines the procedure for validating the RF performance of the Me
 
 **Low LoRa Power?**  
 - Check the **RF matching network** (LC values).  
-- Verify **STM32WL RFIO settings** in firmware.
+- Verify **STM32WL RFIO settings** in firmware.  
+- Ensure correct capability flag settings (e.g., Bit 23 for Low-Energy Mode) in firmware.
 
 **GPS Not Locking?**  
 - Confirm proper **antenna connection**.  
 - Ensure stable **3.3V power supply** to the GPS module.
+
+**Unexpected Packet Errors?**  
+- Verify 64-bit capability flags (e.g., Bit 36 for compression) in firmware align with test conditions.
+
+---
+
+## TODO
+- Develop test cases for RF performance under various 64-bit capability flag scenarios (e.g., Bit 36, Bit 39 enabled).
 
 ---
 

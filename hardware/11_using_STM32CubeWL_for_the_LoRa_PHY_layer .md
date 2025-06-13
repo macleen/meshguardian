@@ -98,7 +98,9 @@ Example: OTAA Join Request
 **Power Management**
 Enter low-power mode with:  
 ```c
-    HAL_SUBGHZ_SetLowPowerMode();
+    if (CHECK_CAPABILITY_FLAG(Bit 23)) {  // Low-Energy Mode, see   protocol-specs/capability_flags.md
+      HAL_SUBGHZ_SetLowPowerMode();
+    }
 ```
 
 **Antenna Switch Control**
@@ -112,7 +114,17 @@ Validate configuration in subghz_conf.h
 | ❌ No LoRa Output | Check `SUBGHZ_SPI` initialization, verify `HAL_SUBGHZ_Transmit()` is called   |
 | ⚠️ Poor Range     | Use `Radio_Calibrate()` and match antenna to 50Ω                              |
 | ❌ GPS No Lock    | Check antenna wiring, ensure 3.3V rail is stable                              |
+| ❌ Packet Errors    |Ensure capability flags (e.g., Bit 39 for quantum mode) align with firmware   
 
+# Software-Hardware Alignment
+Validate firmware support for 64-bit capability flag-driven features, such as:  
+
+- Low-Energy Mode (Bit 23): Optimizes power for off-grid deployments.
+- Extended Compression (Bit 36): Requires processing for zlib or Brotli in packets.
+- Post-Quantum Cryptography (Bit 39): Demands resources for Kyber/Dilithium.
+- Multi-Blockchain Logging (Bit 37): Needs stable LoRaWAN for audit trails.  
+
+See protocol-specs/capability_flags.md for flag definitions and test firmware with varied flag settings.
 
 **Next Steps**
 Import into Project
@@ -123,9 +135,13 @@ Import into Project
 **Adapt to MeshGuardian**
 Update pin mappings in subghz_conf.h  
 Integrate with RTOS or Zephyr if used  
-Match settings with /pseudo-code/protocol/ and /hardware/  
+Configure 64-bit capability flags in config.py to match settings in /pseudo-code/protocol/ and /hardware/ (see protocol-specs/capability_flags.md)
 
 ---
+
+## TODO
+Implement firmware tests for 64-bit capability flag scenarios (e.g., Bit 36, Bit 39 enabled).  
+
 
 With STM32CubeWL, you can accelerate LoRa PHY development, reduce debugging complexity, and ensure a production-grade RF stack for MeshGuardian’s mission-critical deployments.
 

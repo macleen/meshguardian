@@ -3,6 +3,8 @@
 ## Background
 In MeshGuardian, a **packet** is a data unit sent between nodes (e.g., IoT sensors, crisis radios, 4.1.3, 5.15), like a message in a delivery network. Packets carry a unique ID (tracking number), source (sender), destination (receiver), data (content), and headers (instructions, e.g., urgency). The Core Networking module enables resilient communication in disconnected environments (e.g., war zones, 5.15; rural IoT, 5.14) using Delay-Tolerant Networking (DTN, 4.1.5), Trust Graphs (4.1.2) for secure routing, and protocol-agnostic transports (LoRa, Zigbee, 4.1.1). This file defines packet creation, foundational for blockchain logging (5.11), telehealth (5.12), and emergency messaging (5.16), serving as a blueprint for developers.
 
+**Note**: The MeshGuardian system has transitioned to a 64-bit capability flag architecture, expanding the feature set for future protocol enhancements. Contributors should refer to `protocol-specs/capability_flags.md` for updated bit positions and new flags.
+
 ## Purpose
 Defines the `PacketCreator` class for initializing packet attributes, the `Packet.create` method for orchestrating creation, and the `PacketHeaders` class for header metadata. Ensures robust packet formation, supporting MeshGuardian’s crisis and IoT goals.
 
@@ -51,15 +53,16 @@ CLASS PacketHeaders
         self.profile = profile
         self.ttl = CALL get_ttl(profile)
         self.priority = CALL get_priority(profile)
-        // Initialize capability flags based on node configuration
-        self.capability_flags = CALL get_capability_flags()
+        // Initialize capability flags as a 64-bit integer based on node configuration
+        self.capability_flags = CALL get_capability_flags()  // Returns a 64-bit integer
+        // Set specific bits based on node capabilities (positions updated for 64-bit system)
         IF node_supports_ml_protocol_selection()
-            SET self.capability_flags BIT 13 TO 1
+            SET self.capability_flags BIT 22 TO 1  // Updated to Bit 22 (example position)
         ELSE
-            SET self.capability_flags BIT 13 TO 0
+            SET self.capability_flags BIT 22 TO 0
         END IF
         IF node_supports_ml_failure_prediction()
-            SET self.capability_flags BIT 14 TO 1
+            SET self.capability_flags BIT 14 TO 1  // Bit 14 retained (example position)
         ELSE
             SET self.capability_flags BIT 14 TO 0
         END IF
@@ -135,7 +138,8 @@ CLASS Packet
   - Headers rely on /pseudo-code/protocol/profiles.md for validation.
   - Logging integrates with /pseudo-code/audit/audit_trail.md.
   - Errors link to /pseudo-code/exceptions/networking_errors.md and /pseudo-code/exceptions/base_exception.md.
-- Future Considerations: This folder may evolve into a Python package with __init__.py, grouping related modules for better organization.
+- Future Considerations: This folder may evolve into a Python package with __init__.py, grouping related modules for better organization.  
+- 64-Bit Capability Flags: Updated to use 64-bit integers for capability_flags. Bit positions (e.g., Bit 22 for ML protocol selection) are examples and must be verified with protocol-specs/capability_flags.md.  
 
 ## Contributor Guide
 - Understand MeshGuardian: Read Background, Use Cases (5.11–5.16).

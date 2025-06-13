@@ -1,10 +1,11 @@
 # Low-Power Mode Module
 
 ## Purpose
-The Low-Power Mode module manages the activation and deactivation of Low-Energy Mode (Capability Flag Bit 24) for devices in the MeshGuardian system. It exists to optimize energy consumption on resource-constrained devices, such as battery-powered sensors or smartphones, by throttling resource-intensive features (e.g., ML-driven operations, high-power protocols) when power is low and restoring full functionality when power is sufficient. This module is critical for ensuring prolonged operation in energy-scarce environments like disaster zones or remote IoT networks.
+The Low-Power Mode module manages the activation and deactivation of Low-E»
+nergy Mode (Capability Flag Bit 23) for devices in the MeshGuardian system. Its primary goal is to optimize energy consumption on resource-constrained devices—such as battery-powered sensors, smartphones, or interplanetary relays—by throttling resource-intensive features (e.g., machine learning-driven operations, high-power protocols, and extended compression) when power is low and restoring full functionality when power levels are sufficient. This module is essential for ensuring prolonged operation in energy-scarce environments, such as disaster zones, remote IoT networks, or space missions.
 
 ## Interfaces
-- **enable_low_power_mode(device_id, battery_level)**: Activates Low-Energy Mode for a device, setting Capability Flag Bit 24 and applying power-saving configurations.  
+- **enable_low_power_mode(device_id, battery_level)**: AActivates Low-Energy Mode for a specified device, setting Capability Flag Bit 23 and applying power-saving configurations.
 - **disable_low_power_mode(device_id)**: Deactivates Low-Energy Mode, clearing Capability Flag Bit 24 and restoring normal configurations.  
 - **check_low_power_mode(device_id)**: Checks if Low-Energy Mode is currently enabled for a device.  
 - **monitor_power_status(device_id)**: Monitors battery level or power source to trigger mode transitions.  
@@ -22,6 +23,8 @@ The Low-Power Mode module manages the activation and deactivation of Low-Energy 
 ## Used In
 - **Use Case 5.15: Aid Relays**: Enables Low-Energy Mode on battery-powered devices in crisis zones to extend operational life for supply tracking.  
 - **Use Case 5.16: Emergency Chat**: Manages power modes on smartphones to ensure prolonged real-time communication in disaster scenarios.  
+- **Use Case 5.1.1: Mars Rover Data Relay**: Adjusts power settings for interplanetary devices, balancing energy consumption with communication needs.  
+-- **Use Case 5.17: Smart City Emergency Response**: Optimizes power usage for real-time data validation in smart city infrastructure.
 
 ## Pseudocode
 ```pseudo-code
@@ -37,13 +40,15 @@ FUNCTION enable_low_power_mode(device_id, battery_level)
     IF battery_level > LOW_BATTERY_THRESHOLD
         RAISE LowPowerError("Battery level " + battery_level + "% is above threshold for Low-Energy Mode")
     END IF
-    // Set Capability Flag Bit 24
-    SET_CAPABILITY_FLAG(device_id, BIT 24, TRUE)
+    // Set Capability Flag Bit 23 for Low-Energy Mode
+    SET_CAPABILITY_FLAG(device_id, BIT(23), TRUE)
     // Apply power-saving configuration
     config = CALL load_config(device_id)
     config.transmission_power = "low"
-    config.ml_protocol_selection = FALSE  // Disable Bit 13
-    config.ml_failure_prediction = FALSE  // Disable Bit 14
+    // Disable resource-intensive features
+    config.ml_protocol_selection = FALSE  // Disable Bit 22 (ML-based protocol selection)
+    config.ml_failure_prediction = FALSE  // Disable Bit 14 (ML failure prediction)
+    config.extended_compression = FALSE   // Disable Bit 24 (extended compression)
     config.forward_error_correction = FALSE  // Disable FEC
     CALL apply_config(device_id, config)
     // Log mode activation
@@ -59,13 +64,21 @@ FUNCTION disable_low_power_mode(device_id)
     IF NOT check_low_power_mode(device_id)
         RAISE LowPowerError("Device " + device_id + " is not in Low-Energy Mode")
     END IF
-    // Clear Capability Flag Bit 24
-    SET_CAPABILITY_FLAG(device_id, BIT 24, FALSE)
+    // Clear Capability Flag Bit 23
+    SET_CAPABILITY_FLAG(device_id, BIT(23), FALSE)
     // Restore normal configuration
     config = CALL load_config(device_id)
     config.transmission_power = "normal"
-    config.ml_protocol_selection = TRUE  // Re-enable Bit 13 if supported
-    config.ml_failure_prediction = TRUE  // Re-enable Bit 14 if supported
+    // Re-enable features if supported by capability flags
+    IF capability_flags & BIT(22)
+        config.ml_protocol_selection = TRUE
+    END IF
+    IF capability_flags & BIT(14)
+        config.ml_failure_prediction = TRUE
+    END IF
+    IF capability_flags & BIT(24)
+        config.extended_compression = TRUE
+    END IF
     config.forward_error_correction = TRUE  // Re-enable FEC if supported
     CALL apply_config(device_id, config)
     // Log mode deactivation
@@ -78,7 +91,7 @@ FUNCTION check_low_power_mode(device_id)
     IF NOT device_exists(device_id)
         RAISE DeviceNotFoundError("Device " + device_id + " not found")
     END IF
-    RETURN GET_CAPABILITY_FLAG(device_id, BIT 24)
+    RETURN GET_CAPABILITY_FLAG(device_id, BIT(23))
 END FUNCTION
 
 // Function to monitor power status and trigger mode transitions
@@ -99,12 +112,12 @@ END FUNCTION
 ---
 
 ## Notes
-- Power Thresholds: Low-Energy Mode is triggered below 20% battery (LOW_BATTERY_THRESHOLD) and exited above 50% (NORMAL_BATTERY_THRESHOLD) to prevent frequent mode switching and ensure stable operation.
-- Feature Throttling: In Low-Energy Mode, disables ML-driven protocol selection (Bit 13), ML failure prediction (Bit 14), and Forward Error Correction (FEC) to reduce power consumption, as specified in Section 2.1.6.
-- Performance: Mode transition checks add minimal overhead (<1ms), and configuration changes are applied efficiently via hardware_config.md.
-- Reliability: Logs mode transitions as Tier 2 events (via Audit Trail module) for traceability, with error handling for invalid device IDs or mode states.
-- Security: Ensures capability flag updates are protected by node authentication (Section 3.2: Capability Negotiation) to prevent unauthorized mode changes.
+- 64-Bit Capability Flags: The module now uses 64-bit capability flags, with Low-Energy Mode assigned to Bit 23 (previously Bit 24 in the 32-bit system). Related features like ML-based protocol selection (Bit 22) and extended compression (Bit 24) are toggled based on mode.  
+- Feature Throttling: In Low-Energy Mode, resource-intensive features—such as ML-driven operations (Bits 14 and 22), extended compression (Bit 24), and Forward Error Correction (FEC)—are disabled to minimize power usage.  
+- Error Handling: Mode transitions and errors are logged via log_event for traceability, with robust checks for invalid device IDs or inappropriate mode states.  
+- Interplanetary Support: The module supports interplanetary devices (Bit 40), where efficient power management is critical for extended missions.
 
 ## TODO
-- Add support for dynamic threshold adjustment based on device type or mission requirements.
-- Implement power source detection (e.g., solar, grid) to refine mode transitions.
+- Add support for dynamic threshold adjustments based on device type or mission-specific requirements.
+- Implement power source detection (e.g., solar, grid) to enhance mode transition logic.
+- Map or deprecate legacy 32-bit flags in configuration settings for full 64-bit compatibility.

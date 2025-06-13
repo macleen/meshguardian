@@ -11,7 +11,6 @@ The Packet Buffering module temporarily stores data packets in the MeshGuardian 
 - **size()**: Returns the current number of packets in the buffer.
 - **flush()**: Removes all packets from the buffer.
 
-
 ## Depends On
 This module relies on the following components:
 - **`/pseudo-code/networking/packet_creation.md`**: Uses the `PacketCreator` class to generate structured packets for buffering.
@@ -19,13 +18,12 @@ This module relies on the following components:
 - **`/pseudo-code/shared/constants.md`**: Uses predefined constants, such as `MAX_BUFFER_SIZE`, to set the buffer’s capacity limits.
 - **`/pseudo-code/audit/audit_trail.md`**: Logs buffering events.
 
-
 ## Called By
 The packet buffering module is utilized by:
 - **`/pseudo-code/networking/packet_sending.md`**: Buffers outgoing packets before they are transmitted over the network.
 - **`/pseudo-code/networking/packet_receiving.md`**: Stores incoming packets before they are processed or validated.
 - **`/pseudo-code/networking/packet_routing.md`**: Holds packets temporarily during routing decisions in complex network paths.
-- **`/pseudo-code/data_transmission.md`**: Buffers ADTC votes during high-latency periods
+- **`/pseudo-code/data_transmission.md`**: Buffers ADTC votes during high-latency periods.
 
 ## Used In
 This module is referenced in the following use cases:
@@ -45,7 +43,7 @@ CLASS PacketBuffer
         IF size() >= self.max_size THEN
             RAISE BufferOverflowError("Cannot add packet: buffer is full")
         END IF
-        priority = packet.profile = "emergency" ? "high" : (packet.data.type = "ADTC_vote" ? "medium" : "low")
+        priority = packet.profile == "emergency" ? "high" : (packet.data.type == "ADTC_vote" ? "medium" : "low")
         ADD packet TO buffer WITH priority
         self.timeouts[packet.id] = timeout
         CALL log_event("PacketBuffered", {
@@ -96,11 +94,12 @@ CLASS PacketBuffer
 ---
 
 ## Notes
-- Edge Cases: Handles buffer overflow with BufferOverflowError, returns NULL for dequeue on empty or expired packets.
-- Performance: Uses a priority queue for O(log n) enqueue/dequeue, optimized for high-priority (emergency) and medium-priority (ADTC votes) packets.
-- ADTC Support: Buffers ADTC votes with ADTC_TIMEOUT (30 minutes), ensuring delivery during communication windows.
-- Thread Safety: Requires locks for concurrent access in multi-threaded environments.
-- Audit Logging: Logs buffering, dequeuing, and discarding events, using Tier 1 for ADTC votes if Bit 15 = 1.
+- Edge Cases: Handles buffer overflow with BufferOverflowError, returns NULL for dequeue on empty or expired packets.  
+- Performance: Uses a priority queue for O(log n) enqueue/dequeue, optimized for high-priority (emergency) and medium-priority (ADTC votes) packets.  
+- ADTC Support: Buffers ADTC votes with ADTC_TIMEOUT (30 minutes), ensuring delivery during communication windows.  
+- Thread Safety: Requires locks for concurrent access in multi-threaded environments.  
+- Audit Logging: Logs buffering, dequeuing, and discarding events, using Tier 1 for ADTC votes if Bit 37 = 1.  
+- 64-Bit Capability Flags: Updated to use 64-bit flags (e.g., BIT(37) for Tier 1 logging). Refer to protocol-specs/capability_flags.md for details.
 
 ## TODO
 - Add priority-based queuing for critical packets.

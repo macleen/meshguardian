@@ -50,10 +50,11 @@ FUNCTION initialize_pod()
 
 // Function: anonymize_data
 FUNCTION anonymize_data(data, packet)
+    // Assuming packet.headers.capability_flags is a 64-bit integer
     IF data contains PII THEN
         FOR each field in data
             IF field is sensitive THEN
-                IF packet.headers.capability_flags BIT 13
+                IF packet.headers.capability_flags & ML_ANONYMIZATION_FLAG
                     // ML-driven redaction
                     model = LOAD_TINYML_MODEL("redaction")
                     input_data = [field, context]
@@ -66,7 +67,7 @@ FUNCTION anonymize_data(data, packet)
             END IF
         END FOR
     END IF
-    logging_interface.log("Data anonymized", {"ml_enabled": packet.headers.capability_flags BIT 13})
+    logging_interface.log("Data anonymized", {"ml_enabled": (packet.headers.capability_flags & ML_ANONYMIZATION_FLAG) != 0})
     RETURN anonymized_data
 
 // Function: restrict_access
@@ -101,7 +102,13 @@ FUNCTION delete_safely(location)
 ---
 
 ## Notes
-- **Edge Case**: If `encryption_utils` fails to generate a key, consider falling back to a predefined emergency key with a limited lifespan.  
-- **Performance**: Ensure that data anonymization and encryption do not introduce significant latency, especially for real-time systems.  
-- **Security**: The `logging_interface` must sanitize logs to avoid leaking sensitive data.  
-- **TODO**: Add support for differential privacy techniques in `anonymize_data` to enhance privacy guarantees.  
+- Edge Case: If encryption_utils fails to generate a key, consider falling back to a predefined emergency key with a limited lifespan.
+- Performance: Ensure that data anonymization and encryption do not introduce significant latency, especially for real-time systems.
+- Security: The logging_interface must sanitize logs to avoid leaking sensitive data.
+- Capability Flags: The capability_flags field is now a 64-bit integer. Bit positions are defined in /pseudo-code/shared/constants.md. Ensure that all bitwise operations are compatible with 64-bit integers. 
+- TODO: Add support for differential privacy techniques in anonymize_data to enhance privacy guarantees. 
+
+## Additional Considerations
+- New 64-bit Flags: The 64-bit system might introduce new capability flags (e.g., for differential privacy). Since the current pseudocode only uses one flag, no additional changes are needed unless the module’s functionality expands.
+- delete_safely: It’s in the pseudocode but not the interfaces. For consistency, it could be added to the interfaces or marked as internal, but this is outside the query’s scope.
+- Dependencies: The packet parameter assumes capability_flags is correctly populated upstream. No changes are needed here unless the data structure changes.

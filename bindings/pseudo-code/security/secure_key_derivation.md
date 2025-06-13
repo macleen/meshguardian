@@ -85,5 +85,7 @@ FUNCTION validate_key(key, expected_length)
 - Iterations: Minimum iterations are enforced (e.g., 100,000 for PBKDF2, 3 for Argon2) to enhance resistance.
 - Key Length: Matches algorithm requirements (e.g., 32 bytes for AES-256).
 - Memory Security: Uses secure allocation and wiping to prevent memory scraping attacks.
+- **Capability Flags**: This module does not currently interact with capability flags. It manages key derivation independently, ensuring compatibility with the system's 64-bit capability flags transition.
+
 - TODO: Add hardware acceleration support for KDF computation.
 - TODO: Implement side-channel resistance techniques (e.g., constant-time operations).

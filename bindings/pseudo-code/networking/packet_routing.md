@@ -3,19 +3,24 @@
 ## Purpose
 The Routing module calculates the optimal path for data packets from a source node to a destination node in a network. It ensures efficient and reliable packet delivery by selecting routes based on factors like shortest distance, fault tolerance, and network metrics, crucial for dynamic network systems like crisis response or IoT applications. The module prevents routing loops using destination checks, Hop Count, and TTL validation, ensuring robust operation in unstable networks.
 
+## NB: 
+Capability flags controlling routing features are defined as a 64-bit integer, with specific bit positions managed via a constants file (e.g., /pseudo-code/shared/constants.md) for flexibility across system updates  
+
 ## Interfaces
 - **select_route(source, destination, packet)**  
   - Purpose: Finds the best route from source to destination, preventing loops with destination and TTL checks.  
   - Parameters:  
     - source: Starting node.  
     - destination: Target node.  
-    - packet: Packet object containing headers (e.g., capability_flags, hop_count, ttl).  
+    - packet: Packet object containing headers (e.g., capability_flags as a 64-bit integer, hop_count, ttl)  
   - Returns:  
     - "Local delivery" if source and destination are the same.  
     - List of nodes representing the route if one exists.  
   - Raises:  
     - RoutingError: If no route is available or TTL is exceeded.  
+  - Note: capability_flags is a 64-bit integer, with bit positions defined in /pseudo-code/shared/constants.md.  
 
+  
 - **find_shortest_path(source, destination)**  
   - Purpose: Computes the shortest path using Dijkstra's algorithm.  
   - Parameters:  

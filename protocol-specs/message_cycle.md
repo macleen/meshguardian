@@ -1,11 +1,9 @@
 # MeshGuardian Message Processing Cycle Specification
 
 ## Overview
-MeshGuardian is a secure, decentralized protocol for message validation, compression, consensus, and auditing in constrained mesh and Delay-Tolerant Networking (DTN) environments. The protocol consists of a modular, auditable message lifecycle spanning 10 core steps and 8 proposed extensions. This document defines each phase, its purpose, and implementation responsibilities.
-
+MeshGuardian is a secure, decentralized protocol for message validation, compression, consensus, and auditing in constrained mesh and Delay-Tolerant Networking (DTN) environments. The protocol consists of a modular, auditable message lifecycle spanning 10 core steps and 8 proposed extensions, leveraging 64-bit capability flags for feature modularity (see `capability_flags.md`). This document defines each phase, its purpose, and implementation responsibilities.
 
 ## Core Steps (1–10)
-
 
 ### Step 1: Node Initialization
 - Loads constants and dynamic configuration (JSON/YAML).
@@ -20,23 +18,23 @@ MeshGuardian is a secure, decentralized protocol for message validation, compres
 
 ### Step 3: Message Received
 - Parses incoming message structure (Header, Payload, Trailer).
-- Verifies routing, signature integrity, TTL, and capability flags.
+- Verifies routing, signature integrity, TTL, and 64-bit capability flags.
 - Buffers chunked fragments and logs anomalies.
 
 ### Step 4: Compression
 - Decompresses incoming payloads or compresses outgoing ones.
-- Selects optimal algorithm (lz4, zstd, Brotli, etc.).
+- Selects optimal algorithm (lz4, zstd, Brotli, zlib; enabled via Bit 36 for extended compression).
 - Validates algorithm security and handles chunked fragments.
 
 ### Step 5: Encryption
 - Decrypts or encrypts message layers (outer, inner PrivacySafePod).
-- Validates cryptographic strength and `QUANTUM_FLAG`.
+- Validates cryptographic strength and Quantum Mode (Bit 39).
 - Uses AES-256, Kyber, Dilithium, or ChaCha20 based on policy.
 
 ### Step 6: ZKP (Zero-Knowledge Proof)
 - Verifies or generates zk-SNARKs, Bulletproofs, or zk-STARKs.
 - Validates proof scheme and logs events.
-- Uses TinyML model for low-energy optimization (optional).
+- Uses TinyML model for low-energy optimization (if enabled).
 
 ### Step 7: Consensus
 - Executes PBFT, PoS, or ADTC protocol depending on `consensus_mode`.
@@ -51,14 +49,14 @@ MeshGuardian is a secure, decentralized protocol for message validation, compres
 ### Step 9: Audit Trail
 - Logs message outcome to blockchain, local ledger, or encrypted buffer.
 - Supports log compression, `retry_policy`, and P2P sync.
-- Logs with `BIT_15` (Tier 1), `BIT_16` (downgrade alert), etc.
+- Logs with Bit 37 (multi-blockchain logging for Tier 1 events).
 
 ### Step 10: End: Message Processed
 - Cleans up memory and buffers, rotates session keys.
 - Emits ACKs, relays results, and collects metrics.
-- Prepares for next message or enters sleep mode (`BIT_24`).
+- Prepares for next message or enters sleep mode (Bit 23).
 
-## Proposed Extensions (Steps 11–18)
+## Extensions (Steps 11–18)
 
 ### Step 11: Network Operation and Maintenance*
 - Manages ongoing message processing and network sync.
@@ -92,22 +90,23 @@ MeshGuardian is a secure, decentralized protocol for message validation, compres
 - Aggregates feedback and community contributions.
 - Applies protocol upgrades and publishes signed versions.
 
-_*Note: Proposed extensions are under review and not yet implemented._
+*Note: Proposed extensions are under review and not yet implemented.*
 
 ## Capability Flags Summary
 
-| Flag      | Bit       | Meaning                              |
-|-----------|-----------|--------------------------------------|
-| `BIT_1`   | `0x01`    | Broadcast                            |
-| `BIT_2`   | `0x02`    | Unicast                              |
-| `BIT_3`   | `0x04`    | Multi-hop Relay                      |
-| `BIT_4`   | `0x08`    | Chunked Fragment                     |
-| `BIT_5`   | `0x10`    | Secure Negotiation                   |
-| `BIT_6–10`| -         | Compression/Encryption Algorithm IDs |
-| `BIT_13`  | `0x1000`  | TinyML Optimization                  |
-| `BIT_15`  | `0x8000`  | Tier 1 / High-Severity Audit Event   |
-| `BIT_16`  | `0x10000` | Downgrade Attack Detected (Alert)    |
-| `BIT_24`  | `0x1000000` | Low-Energy Mode                    |
+| Flag             | Bit       | Meaning                              |
+|------------------|-----------|--------------------------------------|
+| Broadcast        | Bit 0     | Enables broadcast messaging          |
+| Unicast          | Bit 1     | Enables unicast messaging            |
+| Multi-hop Relay  | Bit 2     | Enables multi-hop relay              |
+| Chunked Fragment | Bit 3     | Supports chunked fragment            |
+| Secure Negotiation | Bit 4   | Enables secure negotiation           |
+| Compression      | Bit 36    | Enables extended compression (zlib, Brotli) |
+| Quantum Mode     | Bit 39    | Enables post-quantum cryptography (Kyber, Dilithium) |
+| Multi-Blockchain | Bit 37    | Enables Tier 1 audit logging to blockchains |
+| Low-Energy Mode  | Bit 23    | Enables low-energy operation         |
+
+*Note: Legacy 32-bit flags (e.g., `BIT_1`–`BIT_5`, `BIT_13`, `BIT_16`) are under review for mapping to the 64-bit structure; see `capability_flags.md`.*
 
 ## Testing & CI
 - `test_message_cycle.py` covers all 10 core steps.
@@ -125,6 +124,11 @@ _*Note: Proposed extensions are under review and not yet implemented._
 - **Extension Steps 11–18**: ⚠️ Proposed, under review for phased rollout.
 
 ## Maintainer Notes
-- Contributions should follow audit tagging (`BIT_15`, `BIT_16`).
+- Contributions should follow audit tagging (e.g., Bit 37 for multi-blockchain logging).
 - Document all new flags, metrics, and hashes in `glossary.md`.
 - Ensure backward compatibility when evolving consensus, ZKP, or compression modules.
+
+## Related
+- [capability_flags.md](./capability_flags.md)
+- [glossary.md](./glossary.md)
+- [CONTRIBUTING.md](./CONTRIBUTING.md)

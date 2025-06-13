@@ -28,15 +28,16 @@ CLASS PacketCreator
     METHOD create(source, dest, data, profile="default")
         packet_id = GENERATE_UNIQUE_ID()
         timestamp = GET_CURRENT_TIMESTAMP()
-        // Initialize capability flags based on node configuration
-        capability_flags = CALL get_capability_flags()
+        // Initialize capability flags as a 64-bit integer
+        capability_flags = CALL get_capability_flags()  // Returns a 64-bit integer
+        // Set specific bits based on node capabilities (positions per 64-bit spec)
         IF node_supports_ml_protocol_selection()
-            SET capability_flags BIT 13 TO 1
+            SET capability_flags BIT 22 TO 1  // Example: updated position
         ELSE
-            SET capability_flags BIT 13 TO 0
+            SET capability_flags BIT 22 TO 0
         END IF
         IF node_supports_ml_failure_prediction()
-            SET capability_flags BIT 14 TO 1
+            SET capability_flags BIT 14 TO 1  // Example: retained position
         ELSE
             SET capability_flags BIT 14 TO 0
         END IF
@@ -51,7 +52,6 @@ CLASS PacketCreator
         }
         CALL log_event("PacketCreated", {"id": packet_id, "capability_flags": capability_flags})
         RETURN packet
-
 ```  
 
 ---

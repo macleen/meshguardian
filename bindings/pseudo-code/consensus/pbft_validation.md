@@ -1,12 +1,12 @@
 # PBFT Validation Module  
 
 ## Purpose
-The PBFT Validation module is responsible for validating messages, transactions, and votes within the Practical Byzantine Fault Tolerance (PBFT) consensus algorithm. It ensures that all data being agreed upon by the network meets criteria for integrity, authenticity, and consistency, even in the presence of faulty or malicious nodes, with slashing logic to penalize malicious behavior. The module provides a critical layer of trust and reliability in distributed systems, enabling consensus in environments where up to one-third of nodes might exhibit Byzantine behavior, with fallback handling for sparse networks and high-latency interplanetary scenarios. For resource-constrained devices, it is optimized by simplifying validation, and it supports multi-blockchain or lightweight ledger logging to mitigate single-blockchain dependency risks.
+The PBFT Validation module is responsible for validating messages, transactions, and votes within the Practical Byzantine Fault Tolerance (PBFT) consensus algorithm. It ensures that all data being agreed upon by the network meets criteria for integrity, authenticity, and consistency, even in the presence of faulty or malicious nodes, with slashing logic to penalize malicious behavior. The module provides a critical layer of trust and reliability in distributed systems, enabling consensus in environments where up to one-third of nodes might exhibit Byzantine behavior, with fallback handling for sparse networks and high-latency interplanetary scenarios. For resource-constrained devices, it is optimized by simplifying validation, and it supports multi-blockchain or lightweight ledger logging to mitigate single-blockchain dependency risks. The module leverages 64-bit capability flags for advanced features like quantum-ready signatures (Bit 39) and multi-blockchain logging (Bit 37; see /protocol-specs/capability_flags.md).
 
 ## Interfaces
 - **validate_message(message, context)**: Verifies the structure, integrity, and authenticity of a message received during the consensus process.  
-- **verify_signature(signature, message, public_key)**: Validates the cryptographic signature attached to a message using the sender’s public key.  
-- **check_quorum(votes, context)**: Confirms that a sufficient number of nodes (a quorum) have agreed on a decision or vote, satisfying PBFT’s fault tolerance requirements, and checks for sufficient node counts.  
+- **verify_signature(signature, message, public_key, capability_flags)**: Validates the cryptographic signature attached to a message using the sender’s public key, with support for quantum-ready algorithms (Bit 39).
+- **check_quorum(votes, context)**: Confirms that a sufficient number of nodes (a quorum) have agreed on a decision or vote, satisfying PBFT’s fault tolerance requirements, and checks for sufficient node counts. 
 - **slash_malicious_node(node_id, reason)**: Penalizes a node for malicious behavior by adding it to a slashed nodes list and logging the event.
 
 ## Depends On
@@ -29,7 +29,7 @@ The PBFT Validation module is responsible for validating messages, transactions,
 // Structure for PBFT context
 STRUCT PBFTContext
     message: Message           // Message to validate
-    capability_flags: BITFIELD // 32-bit Capability Flags
+    capability_flags: BITFIELD64 // 64-bit Capability Flags
     device_capability_level: INTEGER // 0 = minimal, 1 = moderate, 2 = high
     message_count: INTEGER     // Counter for tracking validation frequency
     malicious_votes: MAP       // Tracks malicious vote attempts by node_id
@@ -52,7 +52,7 @@ FUNCTION adjust_validation_timeout() RETURNS INTEGER
         CALL log_event("INFO", "Validation timeout adjusted to " + new_timeout + " seconds, RTT: " + current_rtt, capability_flags)
         RETURN new_timeout
     CATCH error
-        CALL log_event("ERROR", "Failed to adjust validation timeout: " + error, capability_flags | BIT_15) // Log as Tier 1
+        CALL log_event("ERROR", "Failed to adjust validation timeout: " + error, capability_flags | BIT(37)) // Log as Tier 1 with multi-blockchain support
         RETURN constants.DEFAULT_TIMEOUT // Fallback to default
     END TRY
 END FUNCTION
@@ -63,10 +63,10 @@ FUNCTION slash_malicious_node(node_id, reason)
         // Add node to slashed nodes list
         SLASHED_NODES_LIST.ADD(node_id)
         // Log slashing event with multi-blockchain support
-        CALL log_event("SLASHING", "Node slashed: " + node_id + ", Reason: " + reason, capability_flags | BIT_15 | constants.SLASHING_EVENT_CODE)
-        CALL log_message("INFO", "Node " + node_id + " slashed for: " + reason, capability_flags | BIT_15)
+        CALL log_event("SLASHING", "Node slashed: " + node_id + ", Reason: " + reason, capability_flags | BIT(37) | constants.SLASHING_EVENT_CODE)
+        CALL log_message("INFO", "Node " + node_id + " slashed for: " + reason, capability_flags | BIT(37))
     CATCH error
-        CALL log_event("ERROR", "Failed to slash node " + node_id + ": " + error, capability_flags | BIT_15) // Log as Tier 1
+        CALL log_event("ERROR", "Failed to slash node " + node_id + ": " + error, capability_flags | BIT(37)) // Log as Tier 1
         RAISE SlashingError("Node slashing failed: " + error)
     END TRY
 END FUNCTION
@@ -75,7 +75,7 @@ END FUNCTION
 FUNCTION validate_message(message, context: PBFTContext)
     // Check if sender is slashed
     IF message.sender IN SLASHED_NODES_LIST THEN
-        CALL log_event("WARNING", "Message from slashed node: " + message.sender, context.capability_flags | BIT_15)
+        CALL log_event("WARNING", "Message from slashed node: " + message.sender, context.capability_flags | BIT(37))
         RETURN False
     END IF
     // Check if the message is well-formed
@@ -85,30 +85,23 @@ FUNCTION validate_message(message, context: PBFTContext)
             CALL slash_malicious_node(message.sender, "Repeated malformed messages")
         END IF
         RETURN False
-    // Validate Feature Flags
+    // Validate Feature Flags (see /protocol-specs/capability_flags.md)
     feature_flags = message.feature_flags
-    IF feature_flags BIT_13 AND feature_flags BIT_24 THEN
+    IF feature_flags & BIT(13) AND feature_flags & BIT(23) THEN  // Bit 13: TinyML, Bit 23: Low-Energy Mode
         CALL context.malicious_votes[message.sender] += 1
         IF context.malicious_votes[message.sender] >= constants.MALICIOUS_VOTE_THRESHOLD THEN
-            CALL slash_malicious_node(message.sender, "Invalid feature flags: ML with Low-Energy Mode")
+            CALL slash_malicious_node(message.sender, "Invalid feature flags: TinyML with Low-Energy Mode")
         END IF
-        RETURN False  // ML Protocol Selection (Bit 13) not allowed in Low-Energy Mode (Bit 24)
-    END IF
-    IF feature_flags BIT_14 AND feature_flags BIT_24 THEN
-        CALL context.malicious_votes[message.sender] += 1
-        IF context.malicious_votes[message.sender] >= constants.MALICIOUS_VOTE_THRESHOLD THEN
-            CALL slash_malicious_node(message.sender, "Invalid feature flags: ML Failure Prediction with Low-Energy Mode")
-        END IF
-        RETURN False  // ML Failure Prediction (Bit 14) not allowed in Low-Energy Mode (Bit 24)
+        RETURN False  // TinyML (Bit 13) not allowed in Low-Energy Mode (Bit 23)
     END IF
     // Check for interplanetary scenario requiring ADTC
     timeout = CALL adjust_validation_timeout()
-    IF timeout > constants.RTT_THRESHOLD AND feature_flags BIT_28 THEN
-        CALL log_event("INFO", "High RTT detected, falling back to ADTC: " + timeout + " seconds", feature_flags | BIT_15)
+    IF timeout > constants.RTT_THRESHOLD AND feature_flags & BIT(40) THEN  // Bit 40: Interplanetary Mode
+        CALL log_event("INFO", "High RTT detected, falling back to ADTC: " + timeout + " seconds", feature_flags | BIT(37))
         RETURN False  // Trigger ADTC fallback
     END IF
     // Simplify validation for ultra-low-power devices
-    IF context.device_capability_level == 0 OR context.capability_flags & BIT_24 THEN
+    IF context.device_capability_level == 0 OR context.capability_flags & BIT(23) THEN
         CALL log_event("INFO", "Using simplified hash-based validation for ultra-low-power device", context.capability_flags)
         expected_hash = CALL crypto_utils.sha3_256(message.content)
         IF message.hash != expected_hash THEN
@@ -137,7 +130,7 @@ FUNCTION validate_message(message, context: PBFTContext)
     context.message_count = context.message_count + 1
     // Retrieve sender's public key and verify signature
     public_key = GET_SENDER_PUBLIC_KEY(message.sender)
-    IF NOT verify_signature(message.signature, message.content, public_key)
+    IF NOT verify_signature(message.signature, message.content, public_key, context.capability_flags)
         CALL context.malicious_votes[message.sender] += 1
         IF context.malicious_votes[message.sender] >= constants.MALICIOUS_VOTE_THRESHOLD THEN
             CALL slash_malicious_node(message.sender, "Invalid signature")
@@ -154,9 +147,13 @@ FUNCTION validate_message(message, context: PBFTContext)
 END FUNCTION
 
 // Function to verify a cryptographic signature
-FUNCTION verify_signature(signature, message, public_key)
-    // Delegate to cryptographic library for signature verification
-    RETURN CRYPTO_VERIFY(signature, message, public_key)
+FUNCTION verify_signature(signature, message, public_key, capability_flags)
+    // Use quantum-ready algorithms if Bit 39 is set (see /protocol-specs/capability_flags.md)
+    IF capability_flags & BIT(39) THEN
+        RETURN CRYPTO_VERIFY_QUANTUM(signature, message, public_key)
+    ELSE
+        RETURN CRYPTO_VERIFY(signature, message, public_key)
+    END IF
 END FUNCTION
 
 // Function to check if a quorum is achieved
@@ -166,8 +163,8 @@ FUNCTION check_quorum(votes, context: PBFTContext)
     max_faulty_nodes = FLOOR((total_nodes - 1) / 3)  // f = max faulty nodes
     min_nodes_required = 3 * max_faulty_nodes + 1  // 3f + 1
     IF total_nodes < min_nodes_required
-        // Log insufficient node count as Tier 1 event
-        CALL log_event("ConsensusError", "Insufficient nodes for PBFT: " + total_nodes + " < " + min_nodes_required, context.capability_flags | BIT_15)
+        // Log insufficient node count as Tier 1 event with multi-blockchain support
+        CALL log_event("ConsensusError", "Insufficient nodes for PBFT: " + total_nodes + " < " + min_nodes_required, context.capability_flags | BIT(37))
         // Buffer votes locally for persistence during outages
         FOR each vote IN votes
             IF vote.node_id NOT IN SLASHED_NODES_LIST THEN
@@ -175,15 +172,15 @@ FUNCTION check_quorum(votes, context: PBFTContext)
             END IF
         END FOR
         // Attempt fallback to ADTC if supported
-        IF context.capability_flags BIT_28 THEN
-            CALL log_event("INFO", "Falling back to ADTC due to insufficient PBFT nodes", context.capability_flags | BIT_15)
+        IF context.capability_flags & BIT(40) THEN
+            CALL log_event("INFO", "Falling back to ADTC due to insufficient PBFT nodes", context.capability_flags | BIT(37))
             RETURN False  // Trigger ADTC fallback
         END IF
         // Log to blockchain or lightweight ledger
         TRY
-            CALL log_event("ConsensusError", "Insufficient nodes for PBFT, PoS fallback", context.capability_flags | BIT_15)
+            CALL log_event("ConsensusError", "Insufficient nodes for PBFT, PoS fallback", context.capability_flags | BIT(37))
         CATCH blockchain_error
-            CALL log_event("ConsensusError_Retry", "Retry on lightweight ledger: Insufficient nodes for PBFT", context.capability_flags | BIT_15)
+            CALL log_event("ConsensusError_Retry", "Retry on lightweight ledger: Insufficient nodes for PBFT", context.capability_flags | BIT(37))
         END TRY
         RAISE ConsensusError("Insufficient nodes for PBFT consensus, consider PoS fallback")
     END IF
@@ -207,7 +204,7 @@ FUNCTION check_quorum(votes, context: PBFTContext)
         END FOR
     END IF
     IF agreeing_votes >= quorum_size
-        CALL log_event("INFO", "Quorum achieved with " + agreeing_votes + " valid votes", context.capability_flags | BIT_15)
+        CALL log_event("INFO", "Quorum achieved with " + agreeing_votes + " valid votes", context.capability_flags | BIT(37))
         RETURN True
     ELSE
         // Buffer valid votes locally for persistence
@@ -216,7 +213,7 @@ FUNCTION check_quorum(votes, context: PBFTContext)
                 CALL store_vote_locally(vote, constants.MAX_BUFFER_PERSISTENCE)
             END IF
         END FOR
-        CALL log_event("WARNING", "Quorum not achieved: " + agreeing_votes + " < " + quorum_size, context.capability_flags | BIT_15)
+        CALL log_event("WARNING", "Quorum not achieved: " + agreeing_votes + " < " + quorum_size, context.capability_flags | BIT(37))
         RETURN False
     END IF
 END FUNCTION
@@ -228,7 +225,7 @@ FUNCTION store_vote_locally(vote, max_persistence)
         CALL store_local_log(vote, expiration=max_persistence)
         CALL log_event("INFO", "Vote stored locally for persistence: " + vote.node_id, capability_flags)
     CATCH storage_error
-        CALL log_event("ERROR", "Failed to store vote locally: " + storage_error, capability_flags | BIT_15) // Log as Tier 1
+        CALL log_event("ERROR", "Failed to store vote locally: " + storage_error, capability_flags | BIT(37)) // Log as Tier 1
         RAISE StorageError("Vote storage failed: " + storage_error)
     END TRY
 END FUNCTION
@@ -238,8 +235,11 @@ END FUNCTION
 
 ## Notes
 - Performance: Validation is optimized to minimize latency in high-throughput consensus systems. Node count checks and slashing logic add minimal overhead (<1ms). Dynamic timeout adjustments ensure reliability in interplanetary scenarios with high RTTs. For low-power devices (Device Capability Level 0 or 1), simplified hash-based validation and limited vote processing reduce computational overhead (e.g., <10ms for 1KB messages).
-- Security: Cryptographic signature verification uses robust, attack-resistant algorithms for high-capability devices. Simplified hash-based validation for low-power devices maintains integrity but sacrifices some Byzantine fault tolerance. Slashing logic penalizes malicious nodes (e.g., for invalid votes or signatures), logging events to multiple blockchains or a lightweight ledger to mitigate single-blockchain risks. Insufficient node count checks prevent consensus stalls in sparse networks, with buffered votes ensuring persistence during outages.
+
+- Security: Cryptographic signature verification uses robust, attack-resistant algorithms for high-capability devices, with support for quantum-ready signatures (Bit 39). Simplified hash-based validation for low-power devices maintains integrity but sacrifices some Byzantine fault tolerance. Slashing logic penalizes malicious nodes (e.g., for invalid votes or signatures), logging events to multiple blockchains or a lightweight ledger (Bit 37) to mitigate single-blockchain risks. Insufficient node count checks prevent consensus stalls in sparse networks, with buffered votes ensuring persistence during outages.
+
 - Scalability: The quorum size adapts dynamically based on the total number of nodes and desired fault tolerance (f = floor((n-1)/3)). Fallback to ADTC or PoS ensures operation in sparse or high-latency networks, with multi-blockchain or lightweight ledger logging enhancing audit trail reliability. Low-power optimizations limit validation frequency and vote processing for resource-constrained devices.
+
 - Hardware Requirements:
     -- Full PBFT Validation: Minimum 80 MHz CPU, 128 KB RAM, 500 µW power consumption; suitable for moderate- to high-capability devices.
     -- Simplified Hash-based Validation: Minimum 16 MHz CPU, 32 KB RAM, 100 µW power consumption; suitable for ultra-low-power IoT nodes.
@@ -254,3 +254,5 @@ END FUNCTION
 - Develop cross-blockchain retry policies for enhanced audit trail resilience.
 - Integrate hardware requirements into a configuration file or compatibility matrix for deployment documentation.
 - Implement audit trail checks for slashed nodes, linking logs to slashing events for traceability.
+- Implement support for new consensus mechanisms via the Pluggable Protocol Engine.
+- Map legacy 32-bit flags (e.g., BIT_13, BIT_24, BIT_28) to the 64-bit structure or deprecate them.

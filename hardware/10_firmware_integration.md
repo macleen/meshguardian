@@ -15,7 +15,7 @@ This guide outlines how to integrate firmware into your MeshGuardian hardware, i
 | **Zephyr OS**    | Integrated RTOS, modular              | Larger footprint (~100KB+) |
 | **RIOT-OS**      | IoT-optimized, lightweight            | Smaller community           |
 
-** Recommendation**: Use **Zephyr OS** for its built-in LoRaWAN support and hardware abstraction.
+**Recommendation**: Use **Zephyr OS** for its built-in LoRaWAN support and hardware abstraction.
 
 ### B. GPS Library
 
@@ -63,7 +63,9 @@ void main() {
 }
 ```  
 
-## 3. LoRaWAN Activation Modes
+## 3. LoRaWAN Activation Modes  
+Ensure packet creation aligns with 64-bit capability flags (e.g., Bit 36 for extended compression, Bit 39 for post-quantum cryptography; see protocol-specs/capability_flags.md).  
+
 A. Over-The-Air Activation (OTAA) 
 ```c
 struct lorawan_join_config join_cfg = {
@@ -102,13 +104,28 @@ C. Power Optimization
 ```  
 
 ## 5. Example Firmware Repository
-Clone a working Zephyr-based template:  
+Clone a working Zephyr-based template or MeshGuardian-specific repository:    
 ```bash
-    git clone https://github.com/zephyrproject-rtos/zephyr --branch v3.4.0
+    git clone https://github.com/macleen/meshguardian  # MeshGuardian-specific
+    git clone https://github.com/zephyrproject-rtos/zephyr --branch v3.4.0  # Zephyr template
 ```  
 
-Troubleshooting Checklist
+## 6. Software-Hardware Alignment
+Validate firmware support for 64-bit capability flag-driven features, such as:  
+
+- Low-Energy Mode (Bit 23): Optimizes power for off-grid deployments.
+- Extended Compression (Bit 36): Requires processing for zlib or Brotli in packets.
+- Post-Quantum Cryptography (Bit 39): Demands resources for Kyber/Dilithium.
+- Multi-Blockchain Logging (Bit 37): Needs stable LoRaWAN for audit trails.  
+
+See protocol-specs/capability_flags.md for flag definitions and test firmware with varied flag settings.
+
+
+Troubleshooting Checklist  
 Issue	Suggested Solution
 LoRa join fails	Check DevEUI/AppKey, antenna connection
 GPS no data	Verify UART baud rate (default is 9600)
 High current	Enable STM32WL low-power modes
+
+## TODO  
+- Implement firmware tests for 64-bit capability flag scenarios (e.g., Bit 36, Bit 39 enabled).

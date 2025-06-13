@@ -1,7 +1,7 @@
 # Validation Module
 
 ## Purpose
-The Validation module is designed to ensure that data packets conform to specific standards before they are processed or transmitted. It performs checks for required fields, validates key attributes like source and destination, and enforces constraints such as maximum data size. This module plays a critical role in maintaining data integrity and preventing errors in applications like secure messaging or crisis communication systems.
+The Validation module ensures that data packets conform to specific standards before processing or transmission. It checks for required fields, validates attributes like source and destination, and enforces constraints such as maximum data size. This module is vital for maintaining data integrity and preventing errors in applications like secure messaging or crisis communication systems.
 
 ## Interfaces
 - **validate_packet(packet)**  
@@ -50,8 +50,8 @@ The Validation module is designed to ensure that data packets conform to specifi
     - errors: A list of validation errors to process.  
 
 ## Depends On
-- Validation Exceptions: Defines custom errors like ValidationError and ConstraintViolation (e.g., from a file like /pseudo-code/exceptions/validation_errors.md).  
-- Shared Constants: Uses constants such as MAX_PACKET_SIZE (e.g., from /pseudo-code/shared/constants.md).  
+- Validation Exceptions: Defines custom errors like ValidationError and ConstraintViolation (e.g., from /pseudo-code/exceptions/validation_errors.md).  
+- Shared Constants: Uses constants such as MAX_PACKET_SIZE, ML_PROTOCOL_SELECTION_BIT, ML_FAILURE_PREDICTION_BIT, and LOW_ENERGY_MODE_BIT (e.g., from /pseudo-code/shared/constants.md). 
 
 ## Called By
 - Packet Receiving Module: Validates incoming packets before further processing.  
@@ -84,13 +84,13 @@ FUNCTION validate_packet(packet)
     IF size_of(packet.data) > MAX_PACKET_SIZE
         RAISE ValidationError("Data exceeds maximum size")
     
-    // Validate capability flags
-    feature_flags = packet.headers.capability_flags
-    IF feature_flags BIT 13 AND feature_flags BIT 24
-        RAISE ValidationError("ML Protocol Selection (Bit 13) not allowed in Low-Energy Mode (Bit 24)")
+    // Validate capability flags (64-bit integer)
+    feature_flags = packet.headers.capability_flags  // 64-bit integer
+    IF feature_flags & constants.ML_PROTOCOL_SELECTION_BIT AND feature_flags & constants.LOW_ENERGY_MODE_BIT
+        RAISE ValidationError("ML Protocol Selection not allowed in Low-Energy Mode")
     END IF
-    IF feature_flags BIT 14 AND feature_flags BIT 24
-        RAISE ValidationError("ML Failure Prediction (Bit 14) not allowed in Low-Energy Mode (Bit 24)")
+    IF feature_flags & constants.ML_FAILURE_PREDICTION_BIT AND feature_flags & constants.LOW_ENERGY_MODE_BIT
+        RAISE ValidationError("ML Failure Prediction not allowed in Low-Energy Mode")
     END IF
     
     // Additional validation checks can be added as needed
@@ -132,3 +132,4 @@ FUNCTION report_validation_errors(errors)
 - Extensibility: The list of required fields and validation rules can be customized based on system needs.  
 - Placeholders: is_valid_source and is_valid_destination are stubs; specific validation logic should be added as required.  
 - Performance: Validation is currently linear with respect to fields and rules; optimization may be needed for large datasets.  
+- 64-bit Capability Flags: capability_flags is now a 64-bit integer. Bit positions are defined in /pseudo-code/shared/constants.md to ensure flexibility and maintainability across system updates.

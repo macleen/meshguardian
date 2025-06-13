@@ -15,6 +15,7 @@ The Deployment module manages the process of deploying the MeshGuardian node sof
 - **/pseudo-code/device/hardware_config.md**: Uses `apply_config` to set hardware-specific configurations during deployment.  
 - **/pseudo-code/shared/helpers.md**: Leverages utility functions for tasks like file transfers and status checks.  
 - **/pseudo-code/logging/logger.md**: Logs deployment events and errors for auditing and debugging.  
+- **/protocol-specs/capability_flags.md**: Defines 64-bit capability flags used in configuration and protocol validation.  
 
 ## Called By
 - Deployment scripts or automation tools used by system administrators or DevOps teams.  
@@ -35,6 +36,8 @@ FUNCTION deploy_node(target_device, software_package)
     INSTALL_SOFTWARE(target_device)
     // Apply initial configurations
     CALL hardware_config.apply_config(target_device)
+    // Validate 64-bit capability flags
+    VALIDATE_CAPABILITY_FLAGS(target_device, config.py)  // Ensure alignment with protocol-specs/capability_flags.md
     // Start the mesh service
     CALL start_mesh_service(target_device)
     // Log the deployment event
@@ -52,6 +55,8 @@ FUNCTION finalize_deployment(target_device)
     IF NOT verify_node_operation(target_device) THEN
         RAISE DeploymentError("Node operation verification failed")
     END IF
+    // Verify capability flag settings
+    CHECK_CAPABILITY_FLAGS(target_device)  // Confirm flags like Bit 23, Bit 39 are applied
     // Apply final configurations if needed
     APPLY_FINAL_CONFIGURATIONS(target_device)
     // Log the completion of deployment
@@ -63,6 +68,8 @@ FUNCTION finalize_deployment(target_device)
 ## Notes
 - **Hardware Variability**: The deployment process must account for different hardware configurations, potentially using device-specific scripts or configurations.  
 - **Error Handling**: Implement robust error handling to manage deployment failures, such as network issues or hardware incompatibilities.  
-- **Security**: Ensure that software packages are securely transferred and verified to prevent tampering or corruption.  
+- **Security**: Ensure that software packages are securely transferred and verified, using post-quantum cryptography (Bit 39) when enabled, to prevent tampering or corruption.
 - **Scalability**: The deployment process should be scalable to handle multiple nodes simultaneously, especially in large-scale deployments.  
+- **Capability Flags**: Configure and validate 64-bit capability flags (e.g., Low-Energy Mode via Bit 23, extended compression via Bit 36) during deployment to ensure protocol compliance; see protocol-specs/capability_flags.md.  
 - **TODO**: Develop automated rollback mechanisms to revert deployments in case of critical failures.  
+- **TODO**: mplement automated checks for 64-bit capability flag compatibility across deployed nodes.  

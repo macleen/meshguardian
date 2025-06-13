@@ -82,6 +82,7 @@ FUNCTION rotate_credential(credential_id, new_credential)
 - **Access Control**: Role-based access controls are enforced for credential retrieval.
 - **Performance**: Balance security with performance; consider caching for frequently used credentials.
 - **Edge Cases**: Handle missing credentials or decryption failures gracefully. 
-- **Rotation Procedures**: Use rotate_credential to periodically refresh credentials.
+- **Rotation Procedures**: Use `rotate_credential` to periodically refresh credentials.
 - **Compliance**: Aligns with NIST SP 800-63B, PCI DSS 3.2.1, and GDPR Art. 32 for secure credential storage.
+- **Capability Flags**: This module does not currently interact with capability flags. It manages credentials independently, ensuring compatibility with the system's 64-bit capability flags transition.
 - **TODO**: Implement zero-knowledge proofs for credential verification and quantum-resistant encryption.

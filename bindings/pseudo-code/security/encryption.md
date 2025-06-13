@@ -1,7 +1,7 @@
 # Encryption Module
 
 ## Purpose
-The Encryption module is designed to secure data by providing encryption and decryption capabilities. It exists to protect sensitive information from unauthorized access, tampering, or interception, ensuring confidentiality, integrity, and authenticity. This is essential for applications like secure messaging, data storage, or communication in untrusted environments, with robust error handling for invalid keys to support post-quantum and conventional cryptography.
+The Encryption module is designed to secure data by providing encryption and decryption capabilities. It exists to protect sensitive information from unauthorized access, tampering, or interception, ensuring confidentiality, integrity, and authenticity. This is essential for applications like secure messaging, data storage, or communication in untrusted environments, with robust error handling for invalid keys to support post-quantum and conventional cryptography. The module has been updated to support a 64-bit `capability_flags` structure; refer to `protocol-specs/capability_flags.md` for flag definitions.
 
 ## Interfaces
 - **`encrypt_data(data, key, context, packet)`**: Encrypts the input data using the provided key, with protocol-specific algorithms (e.g., AES-GCM, Kyber).  
@@ -13,6 +13,7 @@ The Encryption module is designed to secure data by providing encryption and dec
 - **`/pseudo-code/security/key_management.md`**: Handles the generation, storage, and retrieval of encryption keys.  
 - **`/pseudo-code/shared/crypto_library.md`**: Supplies cryptographic algorithms and utilities for encryption and decryption.  
 - **`/pseudo-code/logging/logger.md`**: Logs encryption errors and events for traceability.  
+- **`/pseudo-code/shared/constants.md`**: Defines constants for capability flag bit positions.
 
 ## Called By
 - **`/pseudo-code/networking/data_transfer.md`**: Secures data before it is transmitted over the network.  
@@ -48,8 +49,8 @@ FUNCTION encrypt_data(data, master_key, context, packet)
     IF data IS NULL OR data IS EMPTY THEN
         RAISE EncryptionError("Data is null or empty")
     END IF
-    // Select protocol based on capability flags
-    IF packet.headers.capability_flags BIT 13 THEN
+    // Select protocol based on capability flags (64-bit integer)
+    IF packet.headers.capability_flags & constants.ML_PROTOCOL_SELECTION_BIT THEN
         protocol = CALL select_protocol_ml(context.network_metrics)
     ELSE
         protocol = CALL select_protocol_static(context.network_metrics)
@@ -68,7 +69,7 @@ FUNCTION encrypt_data(data, master_key, context, packet)
         END IF
         RETURN nonce + encrypted_data + tag
     CATCH crypto_error
-        CALL log_message("ERROR", "Encryption failed: " + crypto_error + " for protocol: " + protocol, capability_flags | BIT 15)  // Log as Tier 1
+        CALL log_message("ERROR", "Encryption failed: " + crypto_error + " for protocol: " + protocol, packet.headers.capability_flags | constants.BLOCKCHAIN_AUDIT_BIT)  // Log as Tier 1
         RAISE EncryptionError("Encryption failed: " + crypto_error)
     END TRY
 END FUNCTION
@@ -78,8 +79,8 @@ FUNCTION decrypt_data(encrypted_data, master_key, context, packet)
     IF encrypted_data IS NULL OR encrypted_data IS EMPTY THEN
         RAISE EncryptionError("Encrypted data is null or empty")
     END IF
-    // Select protocol based on capability flags
-    IF packet.headers.capability_flags BIT 13 THEN
+    // Select protocol based on capability flags (64-bit integer)
+    IF packet.headers.capability_flags & constants.ML_PROTOCOL_SELECTION_BIT THEN
         protocol = CALL select_protocol_ml(context.network_metrics)
     ELSE
         protocol = CALL select_protocol_static(context.network_metrics)
@@ -100,7 +101,7 @@ FUNCTION decrypt_data(encrypted_data, master_key, context, packet)
         END IF
         RETURN data
     CATCH crypto_error
-        CALL log_message("ERROR", "Decryption failed: " + crypto_error + " for protocol: " + protocol, capability_flags | BIT 15)  // Log as Tier 1
+        CALL log_message("ERROR", "Decryption failed: " + crypto_error + " for protocol: " + protocol, packet.headers.capability_flags | constants.BLOCKCHAIN_AUDIT_BIT)  // Log as Tier 1
         RAISE EncryptionError("Decryption failed: " + crypto_error)
     END TRY
 END FUNCTION
@@ -141,8 +142,10 @@ END FUNCTION
 ---
 
 ## Notes
-- Key Security: Encryption keys are stored securely via /pseudo-code/security/key_management.md, ideally using a hardware security module (HSM). Invalid key errors are logged as Tier 1 events for traceability.
-- Performance Considerations: Encryption/decryption latency is optimized for AES-GCM (~1µs/KB) and Kyber (~10ms for key encapsulation). Key validation adds minimal overhead (<1ms).
-- Algorithm Support: Supports AES-GCM for Bluetooth and default protocols, and Kyber for LoRa (post-quantum). Future enhancements could add ChaCha20 or Dilithium signatures.
-- Error Handling: Validates keys for format and length, raising KeyError for invalid keys and EncryptionError for crypto failures, with audit trail logging via logger.md.
-- Future Improvements: Implement key rotation via /pseudo-code/security/key_management.md to refresh keys periodically. Add support for hardware-accelerated cryptography (e.g., via HSMs).
+- Key Security: Encryption keys are stored securely via /pseudo-code/security/key_management.md, ideally using a hardware security module (HSM). Invalid key errors are logged as Tier 1 events for traceability.  
+- Performance Considerations: Encryption/decryption latency is optimized for AES-GCM (~1µs/KB) and Kyber (~10ms for key encapsulation). Key validation adds minimal overhead (<1ms).  
+- Algorithm Support: Supports AES-GCM for Bluetooth and default protocols, and Kyber for LoRa (post-quantum). Future enhancements could add ChaCha20 or Dilithium signatures.  
+- Error Handling: Validates keys for format and length, raising KeyError for invalid keys and EncryptionError for crypto failures, with audit trail logging via logger.md.  
+- 64-bit Capability Flags: The capability_flags field is now a 64-bit integer. Bit positions are defined in /pseudo-code/shared/constants.md for flexibility and maintainability. Refer to protocol-specs/capability_flags.md for the full specification.  
+- Future Improvements: Implement key rotation via /pseudo-code/security/key_management.md to refresh keys periodically. Add support for hardware-accelerated cryptography (e.g., via HSMs).  
+

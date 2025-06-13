@@ -1,7 +1,7 @@
 # Audit Trail Module
 
 ## Purpose
-The Audit Trail module ensures transparency and traceability in MeshGuardian by logging critical system events, such as consensus decisions, data transmissions, and errors, to a blockchain or local storage. It supports both Tier 1 (blockchain-based, e.g., Solana, Avalanche, Ethereum) and Tier 2 (local with P2P sync) logging, with dynamic timeout adjustments and robust buffering for interplanetary deployments. To mitigate security risks from reliance on a single blockchain (e.g., Solana), the module implements multi-blockchain support and a custom lightweight ledger for critical events, reducing dependency on external systems. It also integrates with slashing logic for malicious nodes in PBFT and PoS consensus, ensuring accountability in crisis zones and interplanetary missions.
+The Audit Trail module ensures transparency and traceability in MeshGuardian by logging critical system events, such as consensus decisions, data transmissions, and errors, to a blockchain or local storage. It supports both Tier 1 (blockchain-based, e.g., Solana, Avalanche, Ethereum) and Tier 2 (local with P2P sync) logging, with dynamic timeout adjustments and robust buffering for interplanetary deployments. To mitigate security risks from reliance on a single blockchain (e.g., Solana), the module implements multi-blockchain support and a custom lightweight ledger for critical events, reducing dependency on external systems. It also integrates with slashing logic for malicious nodes in PBFT and PoS consensus, ensuring accountability in crisis zones and interplanetary missions. The module leverages 64-bit capability flags for logging tiers and interplanetary adjustments (see /protocol-specs/capability_flags.md).
 
 ## Interfaces
 - **log_event(level, message, flags)**: Logs an event with the specified level, message, and capability flags.
@@ -34,7 +34,7 @@ STRUCT AuditTrailEvent
     level: STRING           // Log level (e.g., "INFO", "ERROR")
     message: STRING         // Event message
     timestamp: INTEGER      // Event timestamp
-    capability_flags: BITFIELD // Capability Flags for context
+    capability_flags: BITFIELD64 // 64-bit Capability Flags for context
     event_hash: BYTE_ARRAY  // Cryptographic hash of the event
     blockchain: STRING      // Target blockchain (e.g., "Solana", "Avalanche")
 END STRUCT
@@ -52,12 +52,12 @@ FUNCTION log_event(level, message, capability_flags)
         event.blockchain = "None" // Default, updated if submitted
 
         // Determine logging tier
-        IF level IN ["ERROR", "Consensus", "ADTC_Validation"] OR capability_flags & BIT_15 THEN
+        IF level IN ["ERROR", "Consensus", "ADTC_Validation"] OR capability_flags & BIT_37 THEN
             // Tier 1: Blockchain logging with multi-blockchain support
             TRY
                 CALL submit_to_blockchain(event)
             CATCH blockchain_error
-                CALL log_message("ERROR", "Blockchain submission failed: " + blockchain_error, capability_flags | BIT_15) // Log as Tier 1
+                CALL log_message("ERROR", "Blockchain submission failed: " + blockchain_error, capability_flags | BIT_37) // Log as Tier 1
                 // Fallback to lightweight ledger
                 IF constants.LIGHTWEIGHT_LEDGER_ENABLED THEN
                     CALL submit_to_lightweight_ledger(event)
@@ -72,7 +72,7 @@ FUNCTION log_event(level, message, capability_flags)
             CALL sync_p2p_logs(GET_PEERS())
         END IF
     CATCH error
-        CALL log_message("ERROR", "Failed to log event: " + error, capability_flags | BIT_15) // Log as Tier 1
+        CALL log_message("ERROR", "Failed to log event: " + error, capability_flags | BIT_37) // Log as Tier 1
         RAISE AuditTrailError("Event logging failed: " + error)
     END TRY
 END FUNCTION
@@ -84,11 +84,11 @@ FUNCTION submit_to_blockchain(event)
         FOR each blockchain IN constants.BLOCKCHAIN_PRIORITY_LIST
             TRY
                 event.blockchain = blockchain
-                // Sign event with private key
-                signature = CALL crypto_utils.sign_event(event.event_hash, PRIVATE_KEY)
+                // Sign event with private key, using quantum-ready algorithms if enabled (Bit 39)
+                signature = CALL crypto_utils.sign_event(event.event_hash, PRIVATE_KEY, capability_flags)
                 // Submit to blockchain with dynamic timeout
                 timeout = constants.BLOCKCHAIN_SUBMISSION_TIMEOUT
-                IF capability_flags & BIT_28 THEN
+                IF capability_flags & BIT_40 THEN  // Assuming Bit 40 for interplanetary mode
                     // Adjust timeout for interplanetary scenarios
                     current_rtt = CALL helpers.estimate_rtt()
                     IF current_rtt > constants.RTT_THRESHOLD THEN
@@ -97,16 +97,16 @@ FUNCTION submit_to_blockchain(event)
                     END IF
                 END IF
                 tx_id = CALL blockchain.submit(event, signature, timeout)
-                CALL log_message("INFO", "Event submitted to " + blockchain + ": tx_id=" + tx_id, capability_flags | BIT_15) // Log as Tier 1
+                CALL log_message("INFO", "Event submitted to " + blockchain + ": tx_id=" + tx_id, capability_flags | BIT_37) // Log as Tier 1
                 RETURN tx_id
             CATCH blockchain_error
-                CALL log_message("WARNING", "Failed to submit to " + blockchain + ": " + blockchain_error, capability_flags | BIT_15) // Log as Tier 1
+                CALL log_message("WARNING", "Failed to submit to " + blockchain + ": " + blockchain_error, capability_flags | BIT_37) // Log as Tier 1
                 // Continue to next blockchain
             END TRY
         END FOR
         RAISE BlockchainError("Failed to submit to any blockchain")
     CATCH error
-        CALL log_message("ERROR", "Blockchain submission failed: " + error, capability_flags | BIT_15) // Log as Tier 1
+        CALL log_message("ERROR", "Blockchain submission failed: " + error, capability_flags | BIT_37) // Log as Tier 1
         RAISE BlockchainError("Blockchain submission failed: " + error)
     END TRY
 END FUNCTION
@@ -118,6 +118,10 @@ FUNCTION submit_to_lightweight_ledger(event)
         IF GET_LEDGER_SIZE() >= constants.LIGHTWEIGHT_LEDGER_MAX_SIZE THEN
             RAISE LedgerError("Lightweight ledger full")
         END IF
+        // Compress event if enabled (Bit 36)
+        IF capability_flags & BIT_36 THEN
+            event = CALL compress_event(event)
+        END IF
         // Store event in lightweight ledger
         ledger_entry = {
             "event_hash": event.event_hash,
@@ -127,9 +131,9 @@ FUNCTION submit_to_lightweight_ledger(event)
             "capability_flags": event.capability_flags
         }
         CALL store_ledger_entry(ledger_entry)
-        CALL log_message("INFO", "Event submitted to lightweight ledger", capability_flags | BIT_15) // Log as Tier 1
+        CALL log_message("INFO", "Event submitted to lightweight ledger", capability_flags | BIT_37) // Log as Tier 1
     CATCH ledger_error
-        CALL log_message("ERROR", "Lightweight ledger submission failed: " + ledger_error, capability_flags | BIT_15) // Log as Tier 1
+        CALL log_message("ERROR", "Lightweight ledger submission failed: " + ledger_error, capability_flags | BIT_37) // Log as Tier 1
         RAISE LedgerError("Lightweight ledger submission failed: " + ledger_error)
     END TRY
 END FUNCTION
@@ -137,11 +141,15 @@ END FUNCTION
 // Function to persist a log event locally
 FUNCTION persist_log_locally(event, expiration)
     TRY
+        // Compress event if enabled (Bit 36)
+        IF capability_flags & BIT_36 THEN
+            event = CALL compress_event(event)
+        END IF
         // Store event in local storage with expiration
         CALL store_local_log(event, expiration)
         CALL log_message("INFO", "Event persisted locally: " + event.event_hash, capability_flags)
     CATCH storage_error
-        CALL log_message("ERROR", "Failed to persist log locally: " + storage_error, capability_flags | BIT_15) // Log as Tier 1
+        CALL log_message("ERROR", "Failed to persist log locally: " + storage_error, capability_flags | BIT_37) // Log as Tier 1
         RAISE StorageError("Local log persistence failed: " + storage_error)
     END TRY
 END FUNCTION
@@ -164,7 +172,7 @@ FUNCTION sync_p2p_logs(peers)
             END TRY
         END FOR
     CATCH sync_error
-        CALL log_message("ERROR", "P2P log sync failed: " + sync_error, capability_flags | BIT_15) // Log as Tier 1
+        CALL log_message("ERROR", "P2P log sync failed: " + sync_error, capability_flags | BIT_37) // Log as Tier 1
         RAISE SyncError("P2P log sync failed: " + sync_error)
     END TRY
 END FUNCTION
@@ -174,16 +182,17 @@ END FUNCTION
 
 ## Notes
 
-- Transparency: Tier 1 logging uses multi-blockchain support (Solana, Avalanche, Ethereum) for critical events (e.g., errors, consensus, ADTC validation), with a custom lightweight ledger as a fallback to reduce external dependencies. Tier 2 logging uses local storage with P2P sync for non-critical events, ensuring scalability.
-- Reliability: Dynamic timeout adjustments (based on RTT estimates) and robust buffering (up to 30 days) ensure reliable logging in high-latency interplanetary scenarios. Multi-blockchain retries and lightweight ledger fallback enhance resilience against blockchain failures.
-- Security: Events are cryptographically hashed and signed to prevent tampering. Multi-blockchain support mitigates risks from single-blockchain dependency, while the lightweight ledger provides a secure alternative for critical events. Slashing logic for malicious nodes (in PBFT and PoS) is logged as Tier 1 events for accountability.
-- Performance: Blockchain submissions are optimized with dynamic timeouts (capped at 2x default). Local logging and P2P sync are lightweight (<10ms for 1KB logs), with lightweight ledger storage limited to LIGHTWEIGHT_LEDGER_MAX_SIZE to prevent resource exhaustion.
-- Scalability: Supports multiple blockchains via BLOCKCHAIN_PRIORITY_LIST, with configurable preferences for latency, cost, or redundancy. Lightweight ledger supports resource-constrained devices with minimal storage overhead.
+- Transparency: Tier 1 logging uses multi-blockchain support (Solana, Avalanche, Ethereum) for critical events (e.g., errors, consensus, ADTC validation) when Bit 37 is set, with a custom lightweight ledger as a fallback to reduce external dependencies. Tier 2 logging uses local storage with P2P sync for non-critical events, ensuring scalability.
+- Reliability: Dynamic timeout adjustments (based on RTT estimates) when Bit 40 is set (interplanetary mode) and robust buffering (up to 30 days) ensure reliable logging in high-latency interplanetary scenarios. Multi-blockchain retries and lightweight ledger fallback enhance resilience against blockchain failures.
+- Security: Events are cryptographically hashed and signed, with quantum-ready signatures (Bit 39) for audit logs. Multi-blockchain support mitigates risks from single-blockchain dependency, while the lightweight ledger provides a secure alternative for critical events. Slashing logic for malicious nodes (in PBFT and PoS) is logged as Tier 1 events (Bit 37) for accountability.
+- Performance: Blockchain submissions are optimized with dynamic timeouts (capped at 2x default) when Bit 40 is set. Local logging and P2P sync are lightweight (<10ms for 1KB logs), with lightweight ledger storage limited to LIGHTWEIGHT_LEDGER_MAX_SIZE to prevent resource exhaustion. Log compression (Bit 36) optimizes storage and bandwidth.
+- Scalability: Supports multiple blockchains via BLOCKCHAIN_PRIORITY_LIST, with configurable preferences for latency, cost, or redundancy. Lightweight ledger supports resource-constrained devices with minimal storage overhead, enhanced by compression (Bit 36).
 - Edge Cases: Handles blockchain failures, network disruptions, and storage limits by buffering logs locally, retrying across blockchains, or falling back to the lightweight ledger. Malicious node slashing events are logged with high priority.
 
 ## TODO
-- Implement compression for locally stored logs to optimize storage.
+- Implement compression for locally stored logs (Bit 36) to optimize storage.
 - Add support for log rotation to manage MAX_BUFFER_SIZE limits.
 - Integrate with a distributed hash table (DHT) for more efficient P2P log sync.
 - Develop a mechanism for log pruning based on event priority and age.
 - Implement audit trail checks for slashed nodes, linking logs to slashing events for traceability.
+- Map legacy 32-bit flags (e.g., BIT_28 for interplanetary mode) to the 64-bit structure or deprecate them

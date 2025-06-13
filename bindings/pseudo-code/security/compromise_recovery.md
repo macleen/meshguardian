@@ -1,29 +1,30 @@
 # Compromise Recovery Module
 
 ## Purpose:
-The Compromise Recovery module enables a system to recover securely after a suspected or confirmed security breach (e.g., device capture, key leakage, rogue node behavior).
-It provides mechanisms to revoke compromised credentials, regenerate fresh keys, reset trust relationships, and audit past actions for containment.
+The Compromise Recovery module enables a system to recover securely after a suspected or confirmed security breach (e.g., device capture, key leakage, rogue node behavior). It provides mechanisms to revoke compromised credentials, regenerate fresh keys, reset trust relationships, and audit past actions for containment.
 
 ## Interfaces:
 - Function: revoke_node_credentials(node_id)
-  Revokes all cryptographic keys and trust tokens associated with a compromised node.
-
+Revokes all cryptographic keys and trust tokens associated with a compromised node.  
 - Function: regenerate_system_keys(scope)
-  Reissues fresh system-wide or node-specific keys to restore secure operations.
-
+Reissues fresh system-wide or node-specific keys to restore secure operations.  
 - Function: broadcast_revocation(node_id)
-  Notifies all nodes in the mesh network to reject communication with the compromised node.
+Notifies all nodes in the mesh network to reject communication with the compromised node.  
+- Function: audit_breach(node_id, timeframe, packet)
+Performs retrospective analysis of communication/events involving the compromised node.  
+- Function: quarantine_node(node_id, packet)
+Moves the node into a limited-trust zone for observation, rather than full removal.  
+- Function: check_compromise_signatures()
+Checks for signatures of compromise (e.g., duplicate nonces, failed authentications).  
+- Function: enforce_re_authentication(node_id)
+Forces re-authentication for a node, quarantining it if it fails.  
 
-- Function: audit_breach(node_id, timeframe)
-  Performs retrospective analysis of communication/events involving the compromised node.
-
-- Function: quarantine_node(node_id)
-  Moves the node into a limited-trust zone for observation, rather than full removal.
 
 ## Depends On:
 - /pseudo-code/security/key_management.md — For revoking and rotating keys.
 - /pseudo-code/networking/trust_graphs.md — To adjust trust relationships ## dynamically.
 - /pseudo-code/audit/audit_trail.md — For logging and forensic reconstruction.
+- /pseudo-code/shared/constants.md — For capability flag constants (e.g., ML_PROTOCOL_SELECTION_BIT, ML_FAILURE_PREDICTION_BIT).
 
 ## Called By:
 - /pseudo-code/security/incident_response.md — Triggered automatically or manually after alerts.
@@ -36,7 +37,6 @@ It provides mechanisms to revoke compromised credentials, regenerate fresh keys,
 ## Pseudo-code
 ```pseudocode
 
-/* Function: revoke_node_credentials */
 /* Function: revoke_node_credentials */
 FUNCTION revoke_node_credentials(node_id)
     TRY
@@ -67,10 +67,11 @@ FUNCTION broadcast_revocation(node_id)
     LOG("Revocation notice sent for node: " + node_id)
 
 /* Function: audit_breach */
+/* packet: object containing capability_flags (64-bit integer) */
 FUNCTION audit_breach(node_id, timeframe, packet)
     logs = RETRIEVE_AUDIT_LOGS(node_id, timeframe)
     breach_report = ANALYZE_LOGS(logs)
-    IF packet.capability_flags BIT 13 OR packet.capability_flags BIT 14
+    IF (packet.capability_flags & constants.ML_PROTOCOL_SELECTION_BIT) != 0 OR (packet.capability_flags & constants.ML_FAILURE_PREDICTION_BIT) != 0
         ml_logs = FILTER_LOGS(logs, ["ProtocolSelection", "FailurePrediction"])
         APPEND breach_report, ml_logs
     END IF
@@ -78,8 +79,9 @@ FUNCTION audit_breach(node_id, timeframe, packet)
     RETURN breach_report
 
 /* Function: quarantine_node */
+/* packet: object containing capability_flags (64-bit integer) */
 FUNCTION quarantine_node(node_id, packet)
-    IF packet.capability_flags BIT 14
+    IF (packet.capability_flags & constants.ML_FAILURE_PREDICTION_BIT) != 0
         failure_predicted = CALL predict_failure_ml(node_id.battery, node_id.uptime, node_id.rssi_trend)
         IF failure_predicted
             MOVE_TO_QUARANTINE_ZONE(node_id)
@@ -113,8 +115,9 @@ FUNCTION enforce_re_authentication(node_id)
 - Quarantine: Useful when behavior is suspicious but not yet confirmed as malicious.
 - Audit Trail: Critical for post-breach forensics; enable immutable logging in audit_trail.md.
 - Rollback: Allow partial rollback for nodes mistakenly flagged as compromised.
+- 64-bit Capability Flags: The capability_flags field is a 64-bit integer. Bit positions for features like ML-driven protocol selection and failure prediction are defined in /pseudo-code/shared/constants.md.
 
-TODO:
+## TODO:
 - Integrate support for decaying trust levels over time (see trust_graphs.md).
 - Add CLI utility for manual credential revocation and quarantine management.
 - Investigate signed revocation receipts for legal traceability.

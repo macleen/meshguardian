@@ -8,7 +8,7 @@ This document gives you a high-level introduction to the purpose, vision, and mo
 
 ## What Is MeshGuardian?
 
-**MeshGuardian** is an open framework for building secure, delay-tolerant, and protocol-agnostic communication networks that operate in hostile or disconnected environments.
+**MeshGuardian** is an open framework for building secure, delay-tolerant, and protocol-agnostic communication networks that operate in hostile or disconnected environments. It uses 64-bit capability flags to enable modular features like post-quantum encryption and low-energy operation (see `/protocol-specs/capability_flags.md`).
 
 It combines:
 - 📦 Custom packet architecture with secure headers
@@ -34,15 +34,16 @@ MeshGuardian aims to **bridge that gap** by enabling secure, store-and-forward c
 
 ## Core Components
 
-| Folder | Purpose |
-|--------|---------|
-| `/pseudo-code/` | Language-agnostic specification of all modules |
-| `/hardware/` | Build and deploy your own MeshGuardian node |
-| `/security/` | Cryptographic foundation: keys, encryption, authentication |
-| `/networking/` | Core packet creation, sending, buffering, routing |
-| `/monitoring/` | Node health checks and diagnostics |
-| `/protocol/` | Profiles, selectors, and multi-protocol support |
-| `/exceptions/` | Custom error classes for modular robustness |
+| Folder             | Purpose |
+|--------------------|---------|
+| `/pseudo-code/`    | Language-agnostic specification of all modules |
+| `/hardware/`       | Build and deploy your own MeshGuardian node |
+| `/security/`       | Cryptographic foundation: keys, encryption, authentication |
+| `/networking/`     | Core packet creation, sending, buffering, routing |
+| `/monitoring/`     | Node health checks and diagnostics |
+| `/protocol/`       | Profiles, selectors, and multi-protocol support |
+| `/protocol-specs/` | Protocol specifications, including 64-bit capability flags |
+| `/exceptions/`     | Custom error classes for modular robustness |
 
 ---
 
@@ -50,7 +51,7 @@ MeshGuardian aims to **bridge that gap** by enabling secure, store-and-forward c
 
 ✅ Delay-Tolerant by Design  
 ✅ Built-In Key Management + Forward Secrecy  
-✅ Modular & Extensible (LoRa, BLE, Zigbee, TCP/IP)  
+✅ Modular & Extensible (LoRa, BLE, Zigbee, TCP/IP) via 64-bit capability flags (e.g., Bit 23 for Low-Energy Mode, Bit 39 for Quantum Mode)  
 ✅ Inspired by real-world humanitarian and edge-tech needs  
 ✅ Openly documented, testable, and auditable
 
@@ -64,6 +65,7 @@ Choose your path:
 - **[Firmware Setup](3_firmware_quickstart.md)** → Flash the core MeshGuardian logic
 - **[Protocol Simulation](4_protocol_demo.md)** → Run a minimal demo of packet routing
 - **[Security Introduction](5_security_basics.md)** → Understand our approach to cryptographic safety
+- **[Protocol Specifications](/protocol-specs/capability_flags.md)** → Explore 64-bit capability flags and packet structure
 
 ---
 

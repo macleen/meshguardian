@@ -38,7 +38,7 @@ For example, with a **LoRa module (SX127x-based)**:
 📘 Refer to your module’s datasheet or vendor docs for exact dependencies.  
 
 ## 3. Configure Module Parameters
-You’ll need to configure settings such as frequency band, transmission power, and spreading factor to align with your network environment.
+You’ll need to configure settings such as frequency band, transmission power, and spreading factor to align with your network environment.  
 
 3.1 Frequency Band
 Choose a band suitable for your region:  
@@ -64,9 +64,9 @@ Spreading factor affects range vs. data rate:
 Ensure your MeshGuardian software stack is aligned with your wireless module.  
 
 Configuration Options:  
-Device Path: Ensure correct SPI/I2C device path (e.g., /dev/spidev0.0).  
+Device Path: Ensure correct SPI/I2C device path (e.g., /dev/spidev0.0).
 
-Protocol Settings: Match software parameters with module settings.  
+Protocol Settings: Match software parameters with module settings and configure 64-bit capability flags (e.g., Bit 21 for TCPCLv4, Bit 23 for Low-Energy Mode; see protocol-specs/capability_flags.md).
 
 Example Configuration Snippet:  
 ```json
@@ -76,6 +76,12 @@ Example Configuration Snippet:
     "frequency": 868000000,
     "tx_power": 14,
     "spreading_factor": 7
+  },
+  "capability_flags": {
+    "low_energy_mode": true,  // Bit 23
+    "tcpcl_v4": false,       // Bit 21
+    "extended_compression": false,  // Bit 36
+    "quantum_mode": false    // Bit 39
   }
 }
 ```
@@ -86,6 +92,8 @@ Suggested Steps:
 Send Test Packet: Use a script to transmit data.  
 
 Monitor Signal Strength: Confirm reception, analyze RSSI, and adjust   settings.  
+
+Verify Capability Flags: Use MeshGuardian’s diagnostic tools (e.g., diagnostics.py) to ensure protocol settings align with configured flags.  
 
 Example Command:  
 ```bash

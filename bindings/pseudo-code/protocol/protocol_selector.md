@@ -1,7 +1,7 @@
 # Protocol Selector Module
 
 ## Purpose
-The Protocol Selector module dynamically selects the most appropriate communication protocol based on network conditions, packet characteristics, predefined profiles, and energy constraints. It ensures optimal performance, reliability, and energy efficiency, prioritizing low-power protocols in Low-Energy Mode (Bit 24) and high-latency protocols (e.g., DTN) for Asynchronous Delay-Tolerant Consensus (ADTC) in the Interplanetary Profile (Bit 28).
+The Protocol Selector module dynamically selects the most appropriate communication protocol based on network conditions, packet characteristics, predefined profiles, and energy constraints. It ensures optimal performance, reliability, and energy efficiency by prioritizing low-power protocols (e.g., LoRa) in Low-Energy Mode and high-latency protocols (e.g., DTN) for Asynchronous Delay-Tolerant Consensus (ADTC) in the Interplanetary Profile. This module has been updated to support a 64-bit capability_flags structure; see protocol-specs/capability_flags.md for detailed flag definitions.
 
 
 ## Interfaces
@@ -36,11 +36,11 @@ FUNCTION select_protocol(packet, context)
     END IF
     profile = packet.get_profile()
     network_conditions = context.get_network_conditions()
-    is_low_energy = packet.headers.capability_flags HAS BIT_24
+    is_low_energy = packet.headers.capability_flags & constants.LOW_ENERGY_MODE_BIT
     available_protocols = CALL get_available_protocols(is_low_energy)
     
     // Prioritize DTN for ADTC packets in Interplanetary Profile
-    IF packet.headers.capability_flags HAS BIT_28 AND profile = "interplanetary" THEN
+    IF packet.headers.capability_flags & constants.INTERPLANETARY_MODE_BIT AND profile == "interplanetary" THEN
         IF "DTN" IN available_protocols THEN
             CALL log_event("ProtocolSelection", {
                 "protocol": "DTN",
@@ -68,7 +68,7 @@ FUNCTION select_protocol(packet, context)
     END IF
 
     // ML-driven protocol selection (skip in Low-Energy Mode)
-    IF packet.headers.capability_flags HAS BIT_13 AND NOT is_low_energy THEN
+    IF packet.headers.capability_flags & constants.ML_PROTOCOL_SELECTION_BIT AND NOT is_low_energy THEN
         model = LOAD_TINYML_MODEL("protocol_selection")
         input_data = [network_conditions.rssi, network_conditions.distance, network_conditions.latency]
         output = model.predict(input_data)
@@ -150,13 +150,15 @@ END FUNCTION
 ---
 
 ## Notes
-- Selection Factors: Considers network conditions, packet priority, profile settings, and energy constraints.
-- ADTC Support: Prioritizes DTN for ADTC packets in the Interplanetary Profile (Bit 28), supporting high-latency networks.
-- Low-Energy Mode: Prioritizes low-power protocols (e.g., LoRa) and skips ML-driven selection (Bit 13) when Bit 24 = 1.
-- Performance: Protocol selection adds <1ms overhead; ML-driven selection skipped in Low-Energy Mode.
-- Reliability: Ensures protocol compatibility, with fallbacks to default protocols.
+- Selection Factors: Evaluates network conditions, packet priority, profile settings, and energy constraints to choose a protocol.  
+- ADTC Support: Prioritizes DTN for ADTC packets in the Interplanetary Profile when constants.INTERPLANETARY_MODE_BIT is set, ideal for high-latency networks.  
+- Low-Energy Mode: Favors low-power protocols (e.g., LoRa) and disables ML-driven selection (constants.ML_PROTOCOL_SELECTION_BIT) when constants.LOW_ENERGY_MODE_BIT is active.  
+- Performance: Adds <1ms overhead; ML-driven selection is bypassed in Low-Energy Mode for efficiency.  
+- Reliability: Ensures protocol compatibility with fallbacks to a default protocol if needed.  
+- 64-bit Transition: The capability_flags field is now a 64-bit integer, with bit positions defined in /pseudo-code/shared/constants.md for maintainability. See protocol-specs/capability_flags.md for the full specification.  
 
 ## TODO
 - Add protocol fallback for failed selections.
 - Implement weighted scoring for static selection.
 - Optimize DTN selection for interplanetary low-bandwidth scenarios.
+- Verify capability flag bit positions against the latest specification.

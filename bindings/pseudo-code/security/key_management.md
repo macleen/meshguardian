@@ -43,11 +43,20 @@ FUNCTION validate_key(key, parameters)
 END FUNCTION
 
 // Function: generate_key
-FUNCTION generate_key(parameters)
+FUNCTION generate_key(parameters, capability_flags)
     IF NOT VALIDATE_KEY_PARAMETERS(parameters) THEN
         RAISE WeakKeyParametersError("Invalid key parameters")
     END IF
-    IF parameters.purpose IN ["ml_protocol_selection", "ml_failure_prediction"] THEN
+    // Check ML feature flags if applicable
+    IF parameters.purpose == "ml_protocol_selection" THEN
+        IF NOT (capability_flags & ML_PROTOCOL_SELECTION_FLAG) THEN
+            RAISE FeatureDisabledError("ML protocol selection is not enabled")
+        END IF
+        parameters.ml_enabled = TRUE
+    ELSE IF parameters.purpose == "ml_failure_prediction" THEN
+        IF NOT (capability_flags & ML_FAILURE_PREDICTION_FLAG) THEN
+            RAISE FeatureDisabledError("ML failure prediction is not enabled")
+        END IF
         parameters.ml_enabled = TRUE
     END IF
     TRY
@@ -58,7 +67,7 @@ FUNCTION generate_key(parameters)
         CALL log_message("INFO", "Key generated with ID: " + key_id + " for purpose: " + parameters.purpose, capability_flags)
         RETURN key_id
     CATCH crypto_error
-        CALL log_message("ERROR", "Key generation failed: " + crypto_error, capability_flags | BIT 15)  // Log as Tier 1
+        CALL log_message("ERROR", "Key generation failed: " + crypto_error, capability_flags | LOG_TIER_1_FLAG)  // Log as Tier 1
         RAISE KeyError("Key generation failed: " + crypto_error)
     END TRY
 END FUNCTION
@@ -134,6 +143,7 @@ END FUNCTION
 - Storage: HSM integration provides enhanced protection; fallback to encrypted vault if HSM is unavailable.
 - Error Handling: Validates keys for format, length, and entropy, raising KeyError for invalid keys, with logging via logger.md. Secure memory wiping prevents leakage.
 - Compliance: Aligns with NIST SP 800-57, FIPS 140-3 Level 2+, and PCI DSS 3.6 for key management. 
+- **64-bit Capability Flags Transition**: This module has been updated to support 64-bit capability flags. The `capability_flags` parameter is a 64-bit integer, and hardcoded bit positions (e.g., BIT 15) have been replaced with symbolic constants (e.g., LOG_TIER_1_FLAG) defined in `/pseudo-code/shared/constants.md`. Ensure logging dependencies handle 64-bit integers correctly.
 
 ## TODO
 - Implement post-quantum crypto readiness and distributed key generation.  
