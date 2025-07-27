@@ -83,17 +83,10 @@ MeshGuardian stands out among DTN and mesh networking protocols due to its uniqu
 ---
 
 ## Protocol Architecture
+The protocol has been updated to the 64-bit version, which no longer uses the separate "Header", "Payload", and "Trailer" structure from the old 32-bit version. The new architecture integrates these elements for improved efficiency and performance.
 
-| Segment   | Size         | Description |
-|-----------|--------------|-------------|
-| Header    | 128 bytes    | Routing, identity, protocol flags, time, sync, encryption, plugin data |
-| Payload   | Variable     | Compressed & encrypted data (e.g., JSON, telemetry, logs) |
-| Trailer   | 96 bytes     | Signature + Audit Trail Hash |
+Learn more in protocol-specs/
 
-> Example total packet size: 491 bytes  
-> Learn more in `protocol-specs/`
-
----
 
 ## Multi-Language SDKs
 
@@ -106,7 +99,7 @@ MeshGuardian supports SDKs in many popular languages—each with its own entry p
 ├── java/  
 ├── go/  
 ├── javascript/  
-├── pseudo-code/  
+├── pseudo-code/  ( All the blue prints of the necessary code )
 ├── rust/  
   
   
@@ -115,15 +108,6 @@ NB: The MeshGuardian codebase is currently empty but in the process of being con
 
 ---
 
-## Examples
-
-Usage samples are available in `/examples/`:
-
-- `examples/python/`: Encrypt, sign, and sync a packet
-- `examples/c/`: Build and transmit compressed telemetry
-- `examples/go/`: Cross-cluster routing with PBFT sync
-
----
 
 ## Contributing
 
