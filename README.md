@@ -99,7 +99,7 @@ MeshGuardian supports SDKs in many popular languages—each with its own entry p
 ├── java/  
 ├── go/  
 ├── javascript/  
-├── pseudo-code/  ( All the blue prints of the necessary code )
+├── pseudo-code/  ( All the blue prints of the necessary code )  
 ├── rust/  
   
   
