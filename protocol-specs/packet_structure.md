@@ -85,7 +85,7 @@ For a complete list, see the [MeshGuardian documentation](https://meshguardian.o
 - **Relay**: Validates header, updates hop count and vector clock, and forwards using selected protocol.
 - **Receiver**: Verifies signatures, processes FEC, decompresses, decrypts, and handles data (e.g., ADTC votes).
 
-![Processing Flow](/assets/images/docs/processing-flow.webp)
+![Processing Flow](/docs/assets/processing-flow.webp)
 
 ---
 
